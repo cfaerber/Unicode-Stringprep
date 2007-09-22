@@ -1,17 +1,9 @@
-This is the debian package for the Net-IDN-tools module.
-It was created by Claus Färber <claus@faerber.muc.de> using dh-make-perl.
+This is the debian package for the Unicode::Stringprep module.
 
-This copyright info was automatically extracted from the perl module.
-It may not be accurate, so you better check the module sources
-if don't want to get into legal troubles.
+It was created by Claus Färber <CFAERBER@cpan.org>, who is also
+the upstream author, using dh-make-perl.
 
-The upstream author is: 
-
-Claus A. Färber <perl@cfaerber.name>.
-The "Net-IDN-tools" Perl5 kit.
-
-Copyright © 2007 by Claus Färber.  All rights reserved.
-Copyright © 2002 Tatsuhiko Miyagawa.  All rights reserved.
+Copyright © 2007 by Claus Färber. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
@@ -53,7 +45,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
 		     END OF TERMS AND CONDITIONS
 
 
-Perl is distributed under your choice of the GNU General Public License or
-the Artistic License.  On Debian GNU/Linux systems, the complete text of the
-GNU General Public License can be found in `/usr/share/common-licenses/GPL'
-and the Artistic Licence in `/usr/share/common-licenses/Artistic'.
+Perl is distributed under your choice of the GNU General Public
+License or the Artistic License. On Debian GNU/Linux systems, the
+complete text of the GNU General Public License can be found in
+`/usr/share/common-licenses/GPL' and the Artistic Licence in
+`/usr/share/common-licenses/Artistic'.

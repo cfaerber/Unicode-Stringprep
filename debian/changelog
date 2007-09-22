@@ -1,6 +1,5 @@
-libnet-idn-encode-perl (0.99-20070909) unstable; urgency=low
+libunicode-stringprep-perl (0.99-20070923) unstable; urgency=low
 
   * Initial Release.
 
- -- Claus Färber <perl@cfaerber.name>  Sun,  9 Sep 2007 21:00:41 +0200
-
+ -- Claus Färber <CFAERBER@cpan.org>  Sat, 22 Sep 2007 12:00:00 +0200
