@@ -6,7 +6,7 @@ use strict;
 use utf8;
 require 5.006_000;
 
-our $VERSION = '0.99_20070921';
+our $VERSION = '0.99_20070923';
 
 my $_mk_table = sub {
   my @data = ();
@@ -416,7 +416,7 @@ our @A1 = $_mk_table->(<<END);
    E0000
    E0002-E001F
    E0080-EFFFD
-END   
+END
 
 1;
 

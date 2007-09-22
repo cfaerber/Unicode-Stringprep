@@ -6,7 +6,7 @@ use strict;
 use utf8;
 require 5.006_000;
 
-our $VERSION = '0.99_20070921';
+our $VERSION = '0.99_20070923';
 $VERSION = eval $VERSION;
 
 require Exporter;
@@ -16,6 +16,10 @@ our @EXPORT = qw(stringprep);
 use Carp;
 
 use Unicode::Normalize();
+
+use Unicode::Stringprep::Unassigned;
+use Unicode::Stringprep::Mapping;
+use Unicode::Stringprep::Prohibited;
 use Unicode::Stringprep::BiDi;
 
 sub new {
@@ -319,12 +323,12 @@ subclassing:
   *exampleprep = Unicode::Stringprep->new(
     3.2,
     [ 
-      @Unicode::Stringprep::Mapping::B1, 
+      \@Unicode::Stringprep::Mapping::B1, 
     ],
     '',
     [
-      @Unicode::Stringprep::Prohibited::C12,
-      @Unicode::Stringprep::Prohibited::C22,
+      \@Unicode::Stringprep::Prohibited::C12,
+      \@Unicode::Stringprep::Prohibited::C22,
     ],
     1,
   );
@@ -337,7 +341,9 @@ this module is not recommended.
 
 =head1 DATA TABLES
 
-The following modules contain the data tables from S<RFC 3454>:
+The following modules contain the data tables from S<RFC 3454>.
+These modules are automatically loaded when loading
+C<Unicode::Stringprep>.
 
 =over 4
 
