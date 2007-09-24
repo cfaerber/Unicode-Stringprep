@@ -1,4 +1,4 @@
-# $Id: $
+# $Id$
 
 use strict;
 use utf8;
@@ -43,10 +43,7 @@ for(my $pos=0; $pos <= $#Unicode::Stringprep::Prohibited::C12; $pos+=2)
 	 $char++) {
     $C12_to_SPACE{$char} = ' ';
   }
-}
-
-foreach my $m (@Unicode::Stringprep::Prohibited::C12) {
-}
+};
 
 *saslprep = Unicode::Stringprep->new(
   3.2,

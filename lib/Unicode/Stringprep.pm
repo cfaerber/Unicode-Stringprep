@@ -13,6 +13,8 @@ require Exporter;
 our @ISA    = qw(Exporter);
 our @EXPORT = qw(stringprep);
 
+our $REGEXP = undef;
+
 use Carp;
 
 use Unicode::Normalize();
@@ -45,7 +47,8 @@ sub _compile {
   my $prohibited_sub = _compile_prohibited($prohibited_tables);
   my $bidi_sub = $bidi_check ? _compile_bidi() : undef;
 
-  my $code = 'sub { my $string = shift;'.
+  my $code = "sub { no warnings 'utf8';".
+   'my $string = shift;'.
    join('', map { $_ ? "{$_}\n" : ''} (
       $mapping_sub,
       $normalization_sub,
@@ -55,6 +58,8 @@ sub _compile {
     '}';
 
   return eval $code || die $@;
+
+
 }
 
 sub _compile_mapping {
@@ -142,6 +147,15 @@ sub _compile_set {
     }
   }
 
+if($REGEXP) {
+  return join '', map {
+    sprintf( $_->[0] >= $_->[1] 
+      ? "\\x{%04X}"
+      : "\\x{%04X}-\\x{%04X}",
+      @{$_})
+    } @set;
+}
+
   my $set=undef;
   sub _set_compile {
     return '' if !@_;
@@ -171,6 +185,15 @@ sub _compile_set {
 sub _compile_prohibited {
   my $prohibited_sub = _compile_set(@_);
 
+if($REGEXP) {
+  if($prohibited_sub) {
+    return 
+      'if($string =~ m/(['.$prohibited_sub.'])/) {'.
+          'croak sprintf("prohibited character U+%04X",ord($1))'.
+      '}';
+  }
+}
+
   if($prohibited_sub) {
     return 
       'my $length = length($string);'.
@@ -184,6 +207,8 @@ sub _compile_prohibited {
 }
 
 sub _compile_bidi {
+  local $REGEXP = undef;
+
   my $is_RandAL = _compile_set(@Unicode::Stringprep::BiDi::D1);
   my $is_L = _compile_set(@Unicode::Stringprep::BiDi::D2);
 

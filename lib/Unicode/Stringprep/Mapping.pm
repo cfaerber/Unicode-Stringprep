@@ -8,6 +8,10 @@ require 5.006_000;
 
 our $VERSION = '0.99_20070923';
 
+my $_mk_char = $[ <= 5.007 
+  ? sub { eval '"\\x{'.(shift).'}"' }
+  : sub { chr(hex(shift)) };
+
 my $_mk_table = sub {
   my @data = ();
   foreach my $line (split /\n/, shift) {
@@ -19,7 +23,7 @@ my $_mk_table = sub {
         join('',map { 
 	  $_ eq '' 
 	    ? '' 
-	    : chr(hex($_)) 
+	    : $_mk_char->($_)
 	}
 	split(/ +/, $to));
   }

@@ -1,14 +1,12 @@
-# $Id: $
+# $Id$
 
-# Test vectors extracted from:
-#
-#                    Nameprep and IDNA Test Vectors
-#                   draft-josefsson-idn-test-vectors
 
 use strict;
 use utf8;
 
 use Test::More;
+
+no warnings 'utf8';
 
 use Unicode::Stringprep;
 
@@ -132,18 +130,16 @@ our @strprep = (
        'STRINGPREP_CONTAINS_PROHIBITED'
      ],
 
-# perl does not like these
-
-#      [
-#        "Non-character code point U+8FFFE",
-#        "\x{8FFFE}", undef, "Nameprep", 0,
-#        'STRINGPREP_CONTAINS_PROHIBITED'
-#      ],
-#      [
-#        "Non-character code point U+10FFFF",
-#        "\x{10FFFF}", undef, "Nameprep", 0,
-#        'STRINGPREP_CONTAINS_PROHIBITED'
-#      ],
+     [
+       "Non-character code point U+8FFFE",
+       "\x{8FFFE}", undef, "Nameprep", 0,
+       'STRINGPREP_CONTAINS_PROHIBITED'
+     ],
+     [
+       "Non-character code point U+10FFFF",
+       "\x{10FFFF}", undef, "Nameprep", 0,
+       'STRINGPREP_CONTAINS_PROHIBITED'
+     ],
      [
        "Surrogate code U+DF42",
        "\x{DF42}", undef, "Nameprep", 0,
@@ -205,9 +201,6 @@ our @strprep = (
        "Bidi: RandALCat character U+0627 U+0031 U+0628",
        "\x{0627}\x31\x{0628}", "\x{0627}\x31\x{0628}"
      ],
-
-## stored identifiers are not yet supported
-
      [
        "Unassigned code point U+E0002",
        "\x{E0002}", undef, "Nameprep", 'STRINGPREP_NO_UNASSIGNED',
@@ -228,7 +221,9 @@ our @strprep = (
      ],
    );
 
-plan tests => ($#strprep+1);
+my $ITERATIONS = 1000;
+
+plan tests => ($#strprep+1)*1000;
 
 *nameprep = Unicode::Stringprep->new(
   3.2,
@@ -252,12 +247,19 @@ plan tests => ($#strprep+1);
   1,
 );
 
+for(my $i=0;$i<$ITERATIONS;$i++) {
 foreach my $test (@strprep) 
 {
   my ($comment,$in,$out,$profile,$flags,$rc) = @{$test};
 
   is(eval{nameprep($in)}, $rc ? undef : $out, $comment);
 }
+}
+
+# Test vectors extracted from:
+#
+#                    Nameprep and IDNA Test Vectors
+#                   draft-josefsson-idn-test-vectors
 
 # Copyright (C) The Internet Society (2003). All Rights Reserved.
 #

@@ -1,12 +1,9 @@
-# $Id: $
-
-# Test vectors extracted from:
-#
-#                    Nameprep and IDNA Test Vectors
-#                   draft-josefsson-idn-test-vectors
+# $Id$
 
 use strict;
 use utf8;
+
+no warnings 'utf8';
 
 use Test::More;
 
@@ -131,23 +128,21 @@ our @strprep = (
        "\x{10F234}", undef, "Nameprep", 0,
        'STRINGPREP_CONTAINS_PROHIBITED'
      ],
-
-# perl does not like these
-
-#      [
-#        "Non-character code point U+8FFFE",
-#        "\x{8FFFE}", undef, "Nameprep", 0,
-#        'STRINGPREP_CONTAINS_PROHIBITED'
-#      ],
-#      [
-#        "Non-character code point U+10FFFF",
-#        "\x{10FFFF}", undef, "Nameprep", 0,
-#        'STRINGPREP_CONTAINS_PROHIBITED'
-#      ],
+     [
+       "Non-character code point U+8FFFE",
+       "\x{8FFFE}", undef, "Nameprep", 0,
+       'STRINGPREP_CONTAINS_PROHIBITED'
+     ],
+     [
+       "Non-character code point U+10FFFF",
+       "\x{10FFFF}", undef, "Nameprep", 0,
+       'STRINGPREP_CONTAINS_PROHIBITED'
+     ],
      [
        "Surrogate code U+DF42",
        "\x{DF42}", undef, "Nameprep", 0,
-       'STRINGPREP_CONTAINS_PROHIBITED'
+       'STRINGPREP_CONTAINS_PROHIBITED',
+       5.007
      ],
      [
        "Non-plain text character U+FFFD",
@@ -206,7 +201,7 @@ our @strprep = (
        "\x{0627}\x31\x{0628}", "\x{0627}\x31\x{0628}"
      ],
 
-## stored identifiers are not yet supported
+## only in nameprep_st.t, which also forbids unassigned codepoints
 
 #     [
 #       "Unassigned code point U+E0002",
@@ -233,30 +228,35 @@ plan tests => ($#strprep+1);
 *nameprep = Unicode::Stringprep->new(
   3.2,
   [ 
-    @Unicode::Stringprep::Mapping::B1, 
-    @Unicode::Stringprep::Mapping::B2 
+    \@Unicode::Stringprep::Mapping::B1, 
+    \@Unicode::Stringprep::Mapping::B2 
   ],
   'KC',
   [
-    @Unicode::Stringprep::Prohibited::C12,
-    @Unicode::Stringprep::Prohibited::C22,
-    @Unicode::Stringprep::Prohibited::C3,
-    @Unicode::Stringprep::Prohibited::C4,
-    @Unicode::Stringprep::Prohibited::C5,
-    @Unicode::Stringprep::Prohibited::C6,
-    @Unicode::Stringprep::Prohibited::C7,
-    @Unicode::Stringprep::Prohibited::C8,
-    @Unicode::Stringprep::Prohibited::C9
+    \@Unicode::Stringprep::Prohibited::C12,
+    \@Unicode::Stringprep::Prohibited::C22,
+    \@Unicode::Stringprep::Prohibited::C3,
+    \@Unicode::Stringprep::Prohibited::C4,
+    \@Unicode::Stringprep::Prohibited::C5,
+    \@Unicode::Stringprep::Prohibited::C6,
+    \@Unicode::Stringprep::Prohibited::C7,
+    \@Unicode::Stringprep::Prohibited::C8,
+    \@Unicode::Stringprep::Prohibited::C9
   ],
   1,
 );
 
 foreach my $test (@strprep) 
 {
-  my ($comment,$in,$out,$profile,$flags,$rc) = @{$test};
+  my ($comment,$in,$out,$profile,$flags,$rc, $min_perl) = @{$test};
 
   is(eval{nameprep($in)}, $rc ? undef : $out, $comment);
 }
+
+# Test vectors extracted from:
+#
+#                    Nameprep and IDNA Test Vectors
+#                   draft-josefsson-idn-test-vectors
 
 # Copyright (C) The Internet Society (2003). All Rights Reserved.
 #
