@@ -6,24 +6,15 @@ use strict;
 use utf8;
 require 5.006_000;
 
-our $VERSION = '0.99_20070923';
+our $VERSION = '0.99_20070927';
 
-my $_mk_table = sub {
-  my @data = ();
-  foreach my $line (split /\n/, shift) {
-    my($from,$comment) = split /;/, $line; 
-    $from =~ s/[^0-9A-Z-]//gi;
-    ($from,my $to) = split(/-/, $from, 2);
-    push @data, (hex($from), ($to ? hex($to) : undef));
-  }
-  return @data;
-};
+use Unicode::Stringprep::_Common;
 
-our @C11 = $_mk_table->(<<END);
+our @C11 = _mk_set(<<END);
    0020; SPACE
 END
 
-our @C12 = $_mk_table->(<<END);
+our @C12 = _mk_set(<<END);
    00A0; NO-BREAK SPACE
    1680; OGHAM SPACE MARK
    2000; EN QUAD
@@ -43,12 +34,12 @@ our @C12 = $_mk_table->(<<END);
    3000; IDEOGRAPHIC SPACE
 END
 
-our @C21 = $_mk_table->(<<END);
+our @C21 = _mk_set(<<END);
    0000-001F; [CONTROL CHARACTERS]
    007F; DELETE
 END
 
-our @C22 = $_mk_table->(<<END);
+our @C22 = _mk_set(<<END);
    0080-009F; [CONTROL CHARACTERS]
    06DD; ARABIC END OF AYAH
    070F; SYRIAC ABBREVIATION MARK
@@ -67,13 +58,13 @@ our @C22 = $_mk_table->(<<END);
    1D173-1D17A; [MUSICAL CONTROL CHARACTERS]
 END
 
-our @C3 = $_mk_table->(<<END);
+our @C3 = _mk_set(<<END);
    E000-F8FF; [PRIVATE USE, PLANE 0]
    F0000-FFFFD; [PRIVATE USE, PLANE 15]
    100000-10FFFD; [PRIVATE USE, PLANE 16]
 END
 
-our @C4 = $_mk_table->(<<END);
+our @C4 = _mk_set(<<END);
    FDD0-FDEF; [NONCHARACTER CODE POINTS]
    FFFE-FFFF; [NONCHARACTER CODE POINTS]
    1FFFE-1FFFF; [NONCHARACTER CODE POINTS]
@@ -94,11 +85,11 @@ our @C4 = $_mk_table->(<<END);
    10FFFE-10FFFF; [NONCHARACTER CODE POINTS]
 END
 
-our @C5 = $_mk_table->(<<END);
+our @C5 = _mk_set(<<END);
    D800-DFFF; [SURROGATE CODES]
 END
 
-our @C6 = $_mk_table->(<<END);
+our @C6 = _mk_set(<<END);
    FFF9; INTERLINEAR ANNOTATION ANCHOR
    FFFA; INTERLINEAR ANNOTATION SEPARATOR
    FFFB; INTERLINEAR ANNOTATION TERMINATOR
@@ -106,11 +97,11 @@ our @C6 = $_mk_table->(<<END);
    FFFD; REPLACEMENT CHARACTER
 END
 
-our @C7 = $_mk_table->(<<END);
+our @C7 = _mk_set(<<END);
    2FF0-2FFB; [IDEOGRAPHIC DESCRIPTION CHARACTERS]
 END
 
-our @C8 = $_mk_table->(<<END);
+our @C8 = _mk_set(<<END);
    0340; COMBINING GRAVE TONE MARK
    0341; COMBINING ACUTE TONE MARK
    200E; LEFT-TO-RIGHT MARK
@@ -128,7 +119,7 @@ our @C8 = $_mk_table->(<<END);
    206F; NOMINAL DIGIT SHAPES
 END
 
-our @C9 = $_mk_table->(<<END);
+our @C9 = _mk_set(<<END);
    E0001; LANGUAGE TAG
    E0020-E007F; [TAGGING CHARACTERS]
 END

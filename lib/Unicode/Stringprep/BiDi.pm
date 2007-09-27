@@ -6,20 +6,11 @@ use strict;
 use utf8;
 require 5.006_000;
 
-our $VERSION = '0.99_20070923';
+our $VERSION = '0.99_20070927';
 
-my $_mk_table = sub {
-  my @data = ();
-  foreach my $line (split /\n/, shift) {
-    my($from,$comment) = split /;/, $line; 
-    $from =~ s/[^0-9A-Z-]//gi;
-    ($from,my $to) = split(/-/, $from, 2);
-    push @data, (hex($from), ($to ? hex($to) : undef));
-  }
-  return @data;
-};
+use Unicode::Stringprep::_Common;
 
-our @D1 = $_mk_table->(<<END);
+our @D1 = _mk_set(<<END);
    05BE
    05C0
    05C3
@@ -56,7 +47,7 @@ our @D1 = $_mk_table->(<<END);
    FE76-FEFC
 END
 
-our @D2 = $_mk_table->(<<END);
+our @D2 = _mk_set(<<END);
    0041-005A
    0061-007A
    00AA

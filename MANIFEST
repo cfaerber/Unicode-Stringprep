@@ -4,6 +4,7 @@ COPYING
 Makefile.PL
 MANIFEST
 lib/Unicode/Stringprep.pm
+lib/Unicode/Stringprep/_Common.pm
 lib/Unicode/Stringprep/Unassigned.pm
 lib/Unicode/Stringprep/Mapping.pm
 lib/Unicode/Stringprep/Prohibited.pm

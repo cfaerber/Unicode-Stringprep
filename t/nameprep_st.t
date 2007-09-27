@@ -1,6 +1,5 @@
 # $Id$
 
-
 use strict;
 use utf8;
 
@@ -9,6 +8,9 @@ use Test::More;
 no warnings 'utf8';
 
 use Unicode::Stringprep;
+
+$Unicode::Stringprep::REGEXP = 1;
+my $ITERATIONS = 1000;
 
 our @strprep = (
      [
@@ -221,9 +223,7 @@ our @strprep = (
      ],
    );
 
-my $ITERATIONS = 1000;
-
-plan tests => ($#strprep+1)*1000;
+plan tests => ($#strprep+1) * $ITERATIONS;
 
 *nameprep = Unicode::Stringprep->new(
   3.2,

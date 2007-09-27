@@ -32,6 +32,10 @@ sub new {
 
 ## Here be eval dragons
 
+sub croak {
+  die shift;
+}
+
 sub _compile {
   my $unicode_version = shift;
   my $mapping_tables = shift;
@@ -58,9 +62,8 @@ sub _compile {
     '}';
 
   return eval $code || die $@;
-
-
 }
+
 
 sub _compile_mapping {
   my %map = ();
@@ -75,6 +78,35 @@ sub _compile_mapping {
   }
   _mapping_tables(\%map,@_);
 
+if($REGEXP) {
+  return '' if !%map;
+
+  sub _compile_mapping_r { 
+     my $map = shift;
+     if($#_ <= 7) {
+       return (join '', (map { '$char == '.$_.
+        ' ? "'.(join '', map { s/[\/\$\@\%\&\\]/\\$1/g; $_; } ( $$map{$_} )).'"'.
+        '   : ' } @_)).' die';
+     } else {
+      my @a = splice @_, 0, int($#_/2);
+      return '$char < '.$_[0].' ? ('.
+        _compile_mapping_r($map,@a).
+	') : ('.
+        _compile_mapping_r($map,@_).
+	')';
+     }
+  };
+
+  my @from = sort { $a <=> $b } keys %map;
+
+  my $map = sprintf '$string =~ s/([%s])/my $char = ord($1); %s /ge;',
+    (join '', (map { sprintf '\\x{%04X}', $_; } @from)),
+    _compile_mapping_r(\%map, @from);
+
+print STDERR ">>>\n$map\n<<<";
+return $map;
+
+} else {
   my $mapping=undef;
   sub _mapping_compile {
     my $map = shift;
@@ -108,6 +140,7 @@ sub _compile_mapping {
   } else {
     return ''; 
   }
+} # $REGEXP
 }
 
 sub _compile_normalization {
@@ -147,37 +180,12 @@ sub _compile_set {
     }
   }
 
-if($REGEXP) {
   return join '', map {
     sprintf( $_->[0] >= $_->[1] 
       ? "\\x{%04X}"
       : "\\x{%04X}-\\x{%04X}",
       @{$_})
     } @set;
-}
-
-  my $set=undef;
-  sub _set_compile {
-    return '' if !@_;
-
-    if($#_ <= 7) {
-      return
-        join(':',
-	  map {
-	    ( $_->[0] == $_->[1]
-    	      ? '$char=='.$_->[0]
-              : '$char>='.$_->[0].'&&'.'$char<='.$_->[1]).
-	    '?1'
-	  } @_).':undef';
-    } else {
-      my @a = splice @_, 0, int($#_/2);
-      return '$char<'.$_[0]->[0].'?('.
-        _set_compile(@a).
-	'):('.
-        _set_compile(@_).
-	')';
-    }
-  }
 
   return _set_compile(@set);
 }
@@ -185,7 +193,6 @@ if($REGEXP) {
 sub _compile_prohibited {
   my $prohibited_sub = _compile_set(@_);
 
-if($REGEXP) {
   if($prohibited_sub) {
     return 
       'if($string =~ m/(['.$prohibited_sub.'])/) {'.
@@ -194,43 +201,18 @@ if($REGEXP) {
   }
 }
 
-  if($prohibited_sub) {
-    return 
-      'my $length = length($string);'.
-      'for(my $pos=0;$pos<$length;$pos++) {'.
-        'my $char = ord(substr($string, $pos, 1));'.
-	'if('.$prohibited_sub.') {'.
-          'croak sprintf("prohibited character U+%04X",$char)'.
-	'}'.
-      '}';
-  }
-}
-
 sub _compile_bidi {
-  local $REGEXP = undef;
-
   my $is_RandAL = _compile_set(@Unicode::Stringprep::BiDi::D1);
   my $is_L = _compile_set(@Unicode::Stringprep::BiDi::D2);
 
   return 
-    'my $length = length($string);'.
-    'my $has_RandAL = 0;'.
-    'my $has_L = 0;'.
-
-    'for(my $pos=0;$pos<$length;$pos++) {'.
-      'my $char = ord(substr($string, $pos, 1));'.
-      'if(!$has_L && ('.$is_L.')){ $has_L = 1; };'.
-      'if((!$has_RandAL || $pos == $length-1) && ('.$is_RandAL.')){'.
-	  'if($pos>0 && !$has_RandAL){'. # if we find a RandAL at pos > 0, there must have been one (at least at pos 0)
-            'croak "string contains RandALCat character but does not start with one($pos)($char)"'.
-	  '}'.
-	  '$has_RandAL = 1;'.
-      '} elsif($has_RandAL && $pos == $length-1) {'.
-        'croak "string contains RandALCat character but does not end with one ($pos)($char)"'.
-      '}'.
-      
-      'if($has_L && $has_RandAL) {'.
-        'croak "string contains both RandALCat and LCat characters($pos)($char)"'.
+    'if($string =~ m/['.$is_RandAL.']/) {'.
+      'if($string =~ m/['.$is_L.']/) {'.
+        'croak "string contains both RandALCat and LCat characters"'.
+      '} elsif($string !~ m/^['.$is_RandAL.']/) {'.
+        'croak "string contains RandALCat character but does not start with one"'.
+      '} elsif($string !~ m/['.$is_RandAL.']$/) {'.
+        'croak "string contains RandALCat character but does not end with one"'.
       '}'.
     '}';
 }
