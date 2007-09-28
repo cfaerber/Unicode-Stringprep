@@ -14,4 +14,3 @@ t/01ref.t
 t/nameprep.t
 t/nameprep_st.t
 t/saslprep.t
-META.yml                                 Module meta-data (added by MakeMaker)
