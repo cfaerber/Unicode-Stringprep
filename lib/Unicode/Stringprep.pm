@@ -6,14 +6,12 @@ use strict;
 use utf8;
 require 5.006_000;
 
-our $VERSION = '0.99_20070923';
+our $VERSION = '0.99_20070927';
 $VERSION = eval $VERSION;
 
 require Exporter;
 our @ISA    = qw(Exporter);
 our @EXPORT = qw(stringprep);
-
-our $REGEXP = undef;
 
 use Carp;
 
@@ -31,10 +29,6 @@ sub new {
 }
 
 ## Here be eval dragons
-
-sub croak {
-  die shift;
-}
 
 sub _compile {
   my $unicode_version = shift;
@@ -78,7 +72,6 @@ sub _compile_mapping {
   }
   _mapping_tables(\%map,@_);
 
-if($REGEXP) {
   return '' if !%map;
 
   sub _compile_mapping_r { 
@@ -99,48 +92,9 @@ if($REGEXP) {
 
   my @from = sort { $a <=> $b } keys %map;
 
-  my $map = sprintf '$string =~ s/([%s])/my $char = ord($1); %s /ge;',
+  return sprintf '$string =~ s/([%s])/my $char = ord($1); %s /ge;',
     (join '', (map { sprintf '\\x{%04X}', $_; } @from)),
     _compile_mapping_r(\%map, @from);
-
-print STDERR ">>>\n$map\n<<<";
-return $map;
-
-} else {
-  my $mapping=undef;
-  sub _mapping_compile {
-    my $map = shift;
-
-    if($#_ <= 7) {
-      return 'if('.
-        join('}elsif(',
-	  map {
-	    my $replace = $map->{$_};
-	    $replace =~ s/(.)/sprintf('\x{%04X}',ord($1))/ge;
-	    '$d=='.$_.'){$e="'.$replace.'";'
-	  } @_ ).
-	'}else{next MAPPING;}'; 
-    } else {
-      my @a = splice @_, 0, int($#_/2);
-      return 'if($d<'.$_[0].'){'.
-        _mapping_compile($map,@a).
-	'}else{'.
-        _mapping_compile($map,@_).
-	'};';
-    }
-  }
-
-  if(%map) {
-    return
-      'MAPPING: for(my $pos=length($string);$pos>=0;$pos--) {'.
-        'my $d=ord(substr($string,$pos,1)); my $e=undef;'.
-        _mapping_compile(\%map,sort { $a<=>$b } keys %map).
-        'substr($string,$pos,1) = $e'.
-      '}';
-  } else {
-    return ''; 
-  }
-} # $REGEXP
 }
 
 sub _compile_normalization {
@@ -196,7 +150,7 @@ sub _compile_prohibited {
   if($prohibited_sub) {
     return 
       'if($string =~ m/(['.$prohibited_sub.'])/) {'.
-          'croak sprintf("prohibited character U+%04X",ord($1))'.
+          'die sprintf("prohibited character U+%04X",ord($1))'.
       '}';
   }
 }
@@ -208,11 +162,11 @@ sub _compile_bidi {
   return 
     'if($string =~ m/['.$is_RandAL.']/) {'.
       'if($string =~ m/['.$is_L.']/) {'.
-        'croak "string contains both RandALCat and LCat characters"'.
+        'die "string contains both RandALCat and LCat characters"'.
       '} elsif($string !~ m/^['.$is_RandAL.']/) {'.
-        'croak "string contains RandALCat character but does not start with one"'.
+        'die "string contains RandALCat character but does not start with one"'.
       '} elsif($string !~ m/['.$is_RandAL.']$/) {'.
-        'croak "string contains RandALCat character but does not end with one"'.
+        'die "string contains RandALCat character but does not end with one"'.
       '}'.
     '}';
 }

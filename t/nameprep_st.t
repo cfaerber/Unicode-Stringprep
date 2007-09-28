@@ -9,8 +9,7 @@ no warnings 'utf8';
 
 use Unicode::Stringprep;
 
-$Unicode::Stringprep::REGEXP = 1;
-my $ITERATIONS = 1000;
+my $ITERATIONS = 1; #000;
 
 our @strprep = (
      [
@@ -248,12 +247,11 @@ plan tests => ($#strprep+1) * $ITERATIONS;
 );
 
 for(my $i=0;$i<$ITERATIONS;$i++) {
-foreach my $test (@strprep) 
-{
-  my ($comment,$in,$out,$profile,$flags,$rc) = @{$test};
-
-  is(eval{nameprep($in)}, $rc ? undef : $out, $comment);
-}
+  foreach my $test (@strprep) 
+  {
+    my ($comment,$in,$out,$profile,$flags,$rc) = @{$test};
+    is(eval{nameprep($in)}, $rc ? undef : $out, $comment);
+  }
 }
 
 # Test vectors extracted from:
