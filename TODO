@@ -1,0 +1,9 @@
+ROADMAP for Unicode::Stringprep
+
+v1.01
+
+  allow mapping from/to illegal Unicode codepoints (e.g.
+  surrogate pairs U+D800..U+DFFF). Currently, this does not work
+  well with perl versions 5.6.0 to 5.8.2.
+
+$Id$  

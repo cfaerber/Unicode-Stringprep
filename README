@@ -29,17 +29,21 @@ DEPENDENCIES
 
   This module requires these other modules and libraries:
 
-    Unicode::Normalize (core module as of perl 5.8.x)
+    Unicode::Normalize (core module of perl 5.8.x and higher)
 
 PERL VERSION
 
-  You should use perl 5.8.x or higher.
+  You should use perl 5.8.3 or higher.
 
   Well, these modules DO work with perl 5.6.x. However, YOU have
   to make sure that you only pass valid UTF-8 strings to this
   module or you will get unintended results. perl 5.8.x (or
   higher) takes care of this by maintaining a UTF-8 flag for
   strings.
+
+  With perl versions up to 5.8.2, handling some characters in
+  mappings does not work. Currently, this is not used by any
+  stringprep profile.
 
 AUTHOR
 

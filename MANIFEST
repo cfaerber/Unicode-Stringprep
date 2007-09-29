@@ -3,6 +3,7 @@ Changes
 COPYING
 Makefile.PL
 MANIFEST
+TODO
 lib/Unicode/Stringprep.pm
 lib/Unicode/Stringprep/_Common.pm
 lib/Unicode/Stringprep/Unassigned.pm
