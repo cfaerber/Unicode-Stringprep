@@ -41,9 +41,9 @@ PERL VERSION
   higher) takes care of this by maintaining a UTF-8 flag for
   strings.
 
-  With perl versions up to 5.8.2, handling some characters in
-  mappings does not work. Currently, this is not used by any
-  stringprep profile.
+  With perl versions up to 5.8.2, mapping to and from illegal
+  characters (e.g. U+D800..U+DFFF) does not work. Currently, no
+  stringprep profile needs this.
 
 AUTHOR
 

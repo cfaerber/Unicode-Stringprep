@@ -196,7 +196,7 @@ Unicode::Stringprep - Preparation of Internationalized Strings (S<RFC 3454>)
       @Unicode::Stringprep::Prohibited::C7, @Unicode::Stringprep::Prohibited::C8,
       @Unicode::Stringprep::Prohibited::C9 ],
     1 );
-  $output = $prepper($input)
+  $output = $prepper->($input)
 
 =head1 DESCRIPTION
 
