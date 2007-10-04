@@ -9,8 +9,6 @@ no warnings 'utf8';
 
 use Unicode::Stringprep;
 
-my $ITERATIONS = 1; #000;
-
 our @strprep = (
      [
        "Map to nothing",
@@ -144,7 +142,8 @@ our @strprep = (
      [
        "Surrogate code U+DF42",
        "\x{DF42}", undef, "Nameprep", 0,
-       'STRINGPREP_CONTAINS_PROHIBITED'
+       'STRINGPREP_CONTAINS_PROHIBITED',
+       5.000, "matching surrogate pairs U+D800..DFFF"
      ],
      [
        "Non-plain text character U+FFFD",
@@ -222,7 +221,7 @@ our @strprep = (
      ],
    );
 
-plan tests => ($#strprep+1) * $ITERATIONS;
+plan tests => ($#strprep+1);
 
 *nameprep = Unicode::Stringprep->new(
   3.2,
@@ -246,12 +245,14 @@ plan tests => ($#strprep+1) * $ITERATIONS;
   1,
 );
 
-for(my $i=0;$i<$ITERATIONS;$i++) {
-  foreach my $test (@strprep) 
-  {
-    my ($comment,$in,$out,$profile,$flags,$rc) = @{$test};
+foreach my $test (@strprep) 
+{
+  my ($comment,$in,$out,$profile,$flags,$rc, $min_perl, $min_perl_reason) = @{$test};
+
+  SKIP: { 
+    skip sprintf('%s only works from perl v%s', $min_perl_reason || "test", $min_perl), 1 if($min_perl > $^V);
     is(eval{nameprep($in)}, $rc ? undef : $out, $comment);
-  }
+  };
 }
 
 # Test vectors extracted from:

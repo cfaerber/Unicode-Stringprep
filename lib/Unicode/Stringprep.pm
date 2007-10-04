@@ -6,7 +6,7 @@ use strict;
 use utf8;
 require 5.006_000;
 
-our $VERSION = '0.99_20070927';
+our $VERSION = '0.99_20071004';
 $VERSION = eval $VERSION;
 
 require Exporter;
@@ -338,6 +338,21 @@ C<Unicode::Stringprep>.
   @Unicode::Stringprep::BiDi::D2	# Appendix D.2
 
 =back
+
+=head1 PERL VERSION
+
+You should use perl 5.8.3 or higher.
+
+Well, these modules DO work with perl 5.6.x. However, B<you> have to make sure
+that you only pass valid UTF-8 strings to this module or you will get
+unintended results. perl 5.8.x (or higher) takes care of this by maintaining a
+UTF-8 flag for strings.
+
+With perl versions up to 5.8.2, surrogate characters (U+D800..U+DFFF) break
+string handling. If a profile tries to map these characters, they won't be
+mapped (currently no stringprep profile does this). If a profile prohibits
+these characters, this module may fail to detect them (currently, all profiles
+do that, so B<you> have to make sure that these characters are not present).
 
 =head1 AUTHOR
 
