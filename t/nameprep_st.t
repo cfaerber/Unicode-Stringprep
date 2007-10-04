@@ -250,7 +250,7 @@ foreach my $test (@strprep)
   my ($comment,$in,$out,$profile,$flags,$rc, $min_perl, $min_perl_reason) = @{$test};
 
   SKIP: { 
-    skip sprintf('%s only works from perl v%s', $min_perl_reason || "test", $min_perl), 1 if($min_perl > $^V);
+    skip sprintf('%s only works from perl v%s', $min_perl_reason || "test", $min_perl), 1 if(($min_perl || 0) > $^V);
     is(eval{nameprep($in)}, $rc ? undef : $out, $comment);
   };
 }
