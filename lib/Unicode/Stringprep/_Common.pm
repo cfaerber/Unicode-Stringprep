@@ -8,7 +8,8 @@ require 5.006_000;
 
 use Exporter;
 
-our $VERSION = '0.99_20070927';
+our $VERSION = '1.00';
+
 our @ISA = ('Exporter');
 our @EXPORT = ('_mk_set', '_mk_map');
 

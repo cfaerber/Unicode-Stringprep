@@ -6,7 +6,7 @@ use strict;
 use utf8;
 require 5.006_000;
 
-our $VERSION = '0.99_20070927';
+our $VERSION = '1.00';
 
 use Unicode::Stringprep::_Common;
 
