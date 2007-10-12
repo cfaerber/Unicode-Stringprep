@@ -142,7 +142,7 @@ our @strprep = (
        "Surrogate code U+DF42",
        "\x{DF42}", undef, "Nameprep", 0,
        'STRINGPREP_CONTAINS_PROHIBITED',
-       5.000003, "matching surrogate pairs U+D800..DFFF"
+       5.008003, "matching surrogate pairs U+D800..DFFF"
      ],
      [
        "Non-plain text character U+FFFD",
@@ -200,14 +200,11 @@ our @strprep = (
        "Bidi: RandALCat character U+0627 U+0031 U+0628",
        "\x{0627}\x31\x{0628}", "\x{0627}\x31\x{0628}"
      ],
-
-## only in nameprep_st.t, which also forbids unassigned codepoints
-
-#     [
-#       "Unassigned code point U+E0002",
-#       "\x{E0002}", undef, "Nameprep", 'STRINGPREP_NO_UNASSIGNED',
-#       'STRINGPREP_CONTAINS_UNASSIGNED'
-#     ],
+     [
+       "Unassigned code point U+E0002",
+       "\x{E0002}", "\x{E0002}", "Nameprep", # 'STRINGPREP_NO_UNASSIGNED',
+       # 'STRINGPREP_CONTAINS_UNASSIGNED'
+     ],
      [
        "Larger test (shrinking)",
        "X\x{00AD}\x{00DF}\x{0130}\x{2121}\x6a\x{030C}\x{00A0}".
@@ -251,7 +248,10 @@ foreach my $test (@strprep)
   my ($comment,$in,$out,$profile,$flags,$rc, $min_perl, $min_perl_reason) = @{$test};
 
   SKIP: { 
-    skip sprintf('%s only works from perl v%s', $min_perl_reason || "test", $min_perl), 1 if(($min_perl || 0) > $^V);
+    skip sprintf('%s only works from perl v%d.%d.%d', 
+        $min_perl_reason || "test", 
+        int($min_perl), int($min_perl*1000)%1000, int($min_perl*1000*1000)%1000,), 1 
+      if(($min_perl || 0) > $^V);
     is(eval{nameprep($in)}, $rc ? undef : $out, $comment);
   }
 }
