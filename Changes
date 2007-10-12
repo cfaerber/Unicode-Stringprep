@@ -1,5 +1,13 @@
 Revision history for Perl extension Net::IDN::Encode
 
+1.00 Fri Oct 12 00:00:00 2007
+	- first release
+	- cleanup
+
+0.99_20071004 Thu Oct 04 00:00:00 2007
+	- better 5.6.x compatibility II
+	- skip some tests for perl versions <5.8.3.
+
 0.99_20070927 Fri Sep 28 00:00:00 2007
 	- better 5.6.x compatibility
 	- better performance (using regular expression)
