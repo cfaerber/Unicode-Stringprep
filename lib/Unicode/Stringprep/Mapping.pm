@@ -2281,7 +2281,7 @@ This module exports nothing.
 
 =head1 AUTHOR
 
-Claus Färber
+Claus Färber E<lt>CFAERBER@cpan.orgE<gt>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

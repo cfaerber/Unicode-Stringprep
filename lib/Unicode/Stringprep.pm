@@ -6,7 +6,7 @@ use strict;
 use utf8;
 require 5.006_000;
 
-our $VERSION = '1.00';
+our $VERSION = '1.99_20080912';
 $VERSION = eval $VERSION;
 
 require Exporter;
@@ -21,6 +21,9 @@ use Unicode::Stringprep::Unassigned;
 use Unicode::Stringprep::Mapping;
 use Unicode::Stringprep::Prohibited;
 use Unicode::Stringprep::BiDi;
+use Unicode::Stringprep::_Common;
+
+BEGIN { require Encode if $[ > 5.007; };
 
 sub new {
   my $self  = shift;
@@ -58,7 +61,6 @@ sub _compile {
   return eval $code || die $@;
 }
 
-
 sub _compile_mapping {
   my %map = ();
   sub _mapping_tables {
@@ -92,9 +94,9 @@ sub _compile_mapping {
 
   my @from = sort { $a <=> $b } keys %map;
 
-  return sprintf '$string =~ s/([%s])/my $char = ord($1); %s /ge;',
-    (join '', (map { sprintf '\\x{%04X}', $_; } @from)),
-    _compile_mapping_r(\%map, @from);
+  return sprintf '$string =~ s/(%s)/my $char = ord($1); %s /ge;',
+    _compile_set(map{ ($_, $_) } @from),
+    _compile_mapping_r(\%map,@from);
 }
 
 sub _compile_normalization {
@@ -134,14 +136,35 @@ sub _compile_set {
     }
   }
 
-  return join '', map {
+  sub _compile_set_r {
+    my ($a,$b) = @_;
+
+    my $a1 = substr($a,1,1);
+    my $b1 = substr($b,1,1);
+
+    if ($a1 eq $b1) {
+      return sprintf('\\x%02X',$a)._compile_set_r(substr($a,2),substr($b,2));
+    } elsif (length($a) <= 1 && length($b) <= 1) {
+      return sprintf('[\\x%02X-\\x%02X]', $a, $b);
+    } elsif ($a !~ m/^.\x80+$/) {
+      return '('._compile_set_r($a,$a1.("\xBF" x (length($a)-1)).
+        '|'._compile_set_r(bytes::chr(bytes::ord($a1)+1).("\x80" x (length($a)-1)), $b1).')';
+    } elsif ($b !~ m/^.\xBF+$/) {
+      return '('._compile_set_r($a1, bytes::chr(bytes::ord($b1)-1).("\xBF" x (length($a)-1)))
+        '|'._compile_set_r($b1.("\x80" x (length($a)-1)), $b).')';
+    } else {
+      return sprintf('[\\x%02X',$a)._compile_set_r(substr($a,2),substr($b,2));
+    }
+  }
+
+  my $r = (join '', map {
     sprintf( $_->[0] >= $_->[1] 
       ? "\\x{%04X}"
       : "\\x{%04X}-\\x{%04X}",
       @{$_})
-    } @set;
-
-  return _set_compile(@set);
+    } @set);
+ 
+  return $r ? '['.$r.']' : undef;
 }
 
 sub _compile_prohibited {
@@ -149,7 +172,7 @@ sub _compile_prohibited {
 
   if($prohibited_sub) {
     return 
-      'if($string =~ m/(['.$prohibited_sub.'])/) {'.
+      'if($string =~ m/('.$prohibited_sub.')/) {'.
           'die sprintf("prohibited character U+%04X",ord($1))'.
       '}';
   }
@@ -160,12 +183,12 @@ sub _compile_bidi {
   my $is_L = _compile_set(@Unicode::Stringprep::BiDi::D2);
 
   return 
-    'if($string =~ m/['.$is_RandAL.']/) {'.
-      'if($string =~ m/['.$is_L.']/) {'.
+    'if($string =~ m/'.$is_RandAL.'/) {'.
+      'if($string =~ m/'.$is_L.'/) {'.
         'die "string contains both RandALCat and LCat characters"'.
-      '} elsif($string !~ m/^['.$is_RandAL.']/) {'.
+      '} elsif($string !~ m/^'.$is_RandAL.'/) {'.
         'die "string contains RandALCat character but does not start with one"'.
-      '} elsif($string !~ m/['.$is_RandAL.']$/) {'.
+      '} elsif($string !~ m/'.$is_RandAL.'$/) {'.
         'die "string contains RandALCat character but does not end with one"'.
       '}'.
     '}';
