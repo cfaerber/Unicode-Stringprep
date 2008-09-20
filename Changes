@@ -1,8 +1,5 @@
 Revision history for Perl extension Net::IDN::Encode
 
-1.01 Fri Sep 12 00:00:00 2008
-	- fixed 'invalid byte sequence' in Makefile.PL
-
 1.00 Fri Oct 12 00:00:00 2007
 	- first release
 	- cleanup

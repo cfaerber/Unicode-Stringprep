@@ -435,8 +435,12 @@ This module exports nothing.
 
 Claus Färber E<lt>CFAERBER@cpan.orgE<gt>
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+=head1 LICENSE
+
+Copyright © 2007-2008 Claus Färber. All rights reserved.
+
+This library is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 

@@ -8,14 +8,25 @@ use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 WriteMakefile(
-    'NAME'		=> 'Unicode::Stringprep',
-    'VERSION_FROM'	=> 'lib/Unicode/Stringprep.pm', # finds $VERSION
-    'PREREQ_PM'		=> {
+	'NAME'		=> 'Unicode::Stringprep',
+	'VERSION_FROM'	=> 'lib/Unicode/Stringprep.pm', # finds $VERSION
+	'PREREQ_PM'	=> {
 		'Unicode::Normalize' => 0.30,
-	},
-    ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
-      (ABSTRACT => 'Preparation of Internationalized Strings (RFC 3454)',
-       AUTHOR   => 'Claus Färber <CFAERBER@cpan.org>') : ()),
+	    },
+	'ABSTRACT'	=> 'Preparation of Internationalized Strings (RFC 3454)',
+	'AUTHOR'	=> 'Claus Faerber <CFAERBER@cpan.org>',
+	'LICENSE'	=> 'perl',
+
+	$ExtUtils::MakeMaker::VERSION < 6.18 ? () : (
+		'SIGN'		=> 1,
+	    ),
+
+	$ExtUtils::MakeMaker::VERSION < 6.45 ? () : (
+  		'META_MERGE'	=> { 
+			'requires'	=> { 'perl'	=> 5.006, },
+			'recommends'	=> { 'perl'	=> 5.008003, },
+		    },
+	    ),
 );
 
 sub MY::postamble {

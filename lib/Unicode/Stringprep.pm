@@ -6,7 +6,7 @@ use strict;
 use utf8;
 require 5.006_000;
 
-our $VERSION = '1.99_20080912';
+our $VERSION = '1.00_20080919';
 $VERSION = eval $VERSION;
 
 require Exporter;
@@ -21,9 +21,6 @@ use Unicode::Stringprep::Unassigned;
 use Unicode::Stringprep::Mapping;
 use Unicode::Stringprep::Prohibited;
 use Unicode::Stringprep::BiDi;
-use Unicode::Stringprep::_Common;
-
-BEGIN { require Encode if $[ > 5.007; };
 
 sub new {
   my $self  = shift;
@@ -61,6 +58,7 @@ sub _compile {
   return eval $code || die $@;
 }
 
+
 sub _compile_mapping {
   my %map = ();
   sub _mapping_tables {
@@ -94,9 +92,9 @@ sub _compile_mapping {
 
   my @from = sort { $a <=> $b } keys %map;
 
-  return sprintf '$string =~ s/(%s)/my $char = ord($1); %s /ge;',
-    _compile_set(map{ ($_, $_) } @from),
-    _compile_mapping_r(\%map,@from);
+  return sprintf '$string =~ s/([%s])/my $char = ord($1); %s /ge;',
+    (join '', (map { sprintf '\\x{%04X}', $_; } @from)),
+    _compile_mapping_r(\%map, @from);
 }
 
 sub _compile_normalization {
@@ -136,35 +134,14 @@ sub _compile_set {
     }
   }
 
-  sub _compile_set_r {
-    my ($a,$b) = @_;
-
-    my $a1 = substr($a,1,1);
-    my $b1 = substr($b,1,1);
-
-    if ($a1 eq $b1) {
-      return sprintf('\\x%02X',$a)._compile_set_r(substr($a,2),substr($b,2));
-    } elsif (length($a) <= 1 && length($b) <= 1) {
-      return sprintf('[\\x%02X-\\x%02X]', $a, $b);
-    } elsif ($a !~ m/^.\x80+$/) {
-      return '('._compile_set_r($a,$a1.("\xBF" x (length($a)-1)).
-        '|'._compile_set_r(bytes::chr(bytes::ord($a1)+1).("\x80" x (length($a)-1)), $b1).')';
-    } elsif ($b !~ m/^.\xBF+$/) {
-      return '('._compile_set_r($a1, bytes::chr(bytes::ord($b1)-1).("\xBF" x (length($a)-1)))
-        '|'._compile_set_r($b1.("\x80" x (length($a)-1)), $b).')';
-    } else {
-      return sprintf('[\\x%02X',$a)._compile_set_r(substr($a,2),substr($b,2));
-    }
-  }
-
-  my $r = (join '', map {
+  return join '', map {
     sprintf( $_->[0] >= $_->[1] 
       ? "\\x{%04X}"
       : "\\x{%04X}-\\x{%04X}",
       @{$_})
-    } @set);
- 
-  return $r ? '['.$r.']' : undef;
+    } @set;
+
+  return _set_compile(@set);
 }
 
 sub _compile_prohibited {
@@ -172,7 +149,7 @@ sub _compile_prohibited {
 
   if($prohibited_sub) {
     return 
-      'if($string =~ m/('.$prohibited_sub.')/) {'.
+      'if($string =~ m/(['.$prohibited_sub.'])/) {'.
           'die sprintf("prohibited character U+%04X",ord($1))'.
       '}';
   }
@@ -183,12 +160,12 @@ sub _compile_bidi {
   my $is_L = _compile_set(@Unicode::Stringprep::BiDi::D2);
 
   return 
-    'if($string =~ m/'.$is_RandAL.'/) {'.
-      'if($string =~ m/'.$is_L.'/) {'.
+    'if($string =~ m/['.$is_RandAL.']/) {'.
+      'if($string =~ m/['.$is_L.']/) {'.
         'die "string contains both RandALCat and LCat characters"'.
-      '} elsif($string !~ m/^'.$is_RandAL.'/) {'.
+      '} elsif($string !~ m/^['.$is_RandAL.']/) {'.
         'die "string contains RandALCat character but does not start with one"'.
-      '} elsif($string !~ m/'.$is_RandAL.'$/) {'.
+      '} elsif($string !~ m/['.$is_RandAL.']$/) {'.
         'die "string contains RandALCat character but does not end with one"'.
       '}'.
     '}';
@@ -246,7 +223,7 @@ This module exports nothing.
 
 =item B<new($unicode_version, $mapping_tables, $unicode_normalization, $prohibited_tables, $bidi_check)>
 
-Creates a callable object that implements a stringprep profile.
+Creates a C<bless>ed function reference that implements a stringprep profile.
 
 C<$unicode_version> is the Unicode version specified by the
 stringprep profile. Currently, this must be C<3.2>.
@@ -366,23 +343,35 @@ C<Unicode::Stringprep>.
 
 You should use perl 5.8.3 or higher.
 
-Well, these modules DO work with perl 5.6.x. However, B<you> have to make sure
-that you only pass valid UTF-8 strings to this module or you will get
-unintended results. perl 5.8.x (or higher) takes care of this by maintaining a
-UTF-8 flag for strings.
+While this module does work with earlier perl versions, there are
+some limitations:
 
-With perl versions up to 5.8.2, surrogate characters (U+D800..U+DFFF) break
-string handling. If a profile tries to map these characters, they won't be
-mapped (currently no stringprep profile does this). If a profile prohibits
-these characters, this module may fail to detect them (currently, all profiles
-do that, so B<you> have to make sure that these characters are not present).
+Perl 5.6 does not promote strings to UTF-8 automatically.
+B<You> have to make sure that you only pass valid UTF-8 strings to
+this module.
+
+Perl 5.6 to 5.7 come with Unicode databases earlier than 
+version 3.2. Strings that contain characters for which the
+normalisation has been changed are not prepared correctly.
+
+Perl 5.6 to 5.8.2 can't handle surrogate characters
+(U+D800..U+DFFF) in strings.
+If a profile tries to map these characters, they won't be mapped
+(currently no stringprep profile does this).
+If a profile prohibits these characters, this module may fail to
+detect them (currently, all profiles do that, so B<you> have to
+make sure that these characters are not present).
 
 =head1 AUTHOR
 
 Claus Färber <CFAERBER@cpan.org>
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+=head1 LICENSE
+
+Copyright © 2007-2008 Claus Färber. All rights reserved.
+
+This library is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
