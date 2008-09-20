@@ -8,7 +8,7 @@ require 5.006_000;
 
 use Exporter;
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 our @ISA = ('Exporter');
 our @EXPORT = ('_mk_set', '_mk_map');
@@ -48,13 +48,17 @@ sub _mk_map {
 
 1;
 
-# =head1 AUTHOR
-# 
-# Claus Färber E<lt>CFAERBER@cpan.orgE<gt>
-# 
-# =head1 LICENSE
-# 
-# Copyright © 2007-2008 Claus Färber. All rights reserved.
-# 
-# This library is free software; you can redistribute it and/or
-# modify it under the same terms as Perl itself.
+=head1 NAME
+
+Unicode::Stringprep::_Common - Internal functions for C<Unicode::Stringprep::*>
+
+=head1 AUTHOR
+
+Claus Färber E<lt>CFAERBER@cpan.orgE<gt>
+ 
+=head1 LICENSE
+ 
+Copyright © 2007-2008 Claus Färber. All rights reserved.
+ 
+This library is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.

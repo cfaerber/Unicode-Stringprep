@@ -1,5 +1,10 @@
 Revision history for Perl extension Net::IDN::Encode
 
+1.00_20080919 Sat Sep 19 00:00:00 2008
+	- fixed compile error on Solaris 2.11 (i86pc-solaris-64int)
+	- add SIGNATURE
+	- pod cleanup
+
 1.00 Fri Oct 12 00:00:00 2007
 	- first release
 	- cleanup
