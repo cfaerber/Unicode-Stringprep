@@ -6,6 +6,7 @@ use utf8;
 no warnings 'utf8';
 
 use Test::More;
+use Test::NoWarnings;
 
 use Unicode::Stringprep;
 
@@ -220,7 +221,7 @@ our @strprep = (
      ],
    );
 
-plan tests => ($#strprep+1);
+plan tests => ($#strprep+1) + 1;
 
 *nameprep = Unicode::Stringprep->new(
   3.2,

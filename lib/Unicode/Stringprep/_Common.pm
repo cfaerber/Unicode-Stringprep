@@ -4,6 +4,7 @@ package Unicode::Stringprep::_Common;
 
 use strict;
 use utf8;
+use warnings;
 require 5.006_000;
 
 use Exporter;

@@ -4,6 +4,7 @@ use strict;
 use utf8;
 
 use Test::More;
+use Test::NoWarnings;
 
 use Unicode::Stringprep;
 
@@ -32,7 +33,7 @@ our @strprep = (
 
 );
 
-plan tests => ($#strprep+1);
+plan tests => ($#strprep+1) + 1;
 
 my %C12_to_SPACE = ();
 for(my $pos=0; $pos <= $#Unicode::Stringprep::Prohibited::C12; $pos+=2) 

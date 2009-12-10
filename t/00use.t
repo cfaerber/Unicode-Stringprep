@@ -1,7 +1,8 @@
 # $Id$
 
 use strict;
-use Test::More tests=>5;
+use Test::More tests=>6;
+use Test::NoWarnings;
 
 BEGIN { use_ok 'Unicode::Stringprep' }
 BEGIN { use_ok 'Unicode::Stringprep::Unassigned' }

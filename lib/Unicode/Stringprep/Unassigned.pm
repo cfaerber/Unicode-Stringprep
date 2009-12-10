@@ -4,6 +4,7 @@ package Unicode::Stringprep::Unassigned;
 
 use strict;
 use utf8;
+use warnings;
 require 5.006_000;
 
 our $VERSION = '1.01';
