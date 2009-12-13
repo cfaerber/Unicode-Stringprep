@@ -2,9 +2,7 @@ README
 Changes
 LICENSE
 MANIFEST
-META.yml
 Makefile.PL
-SIGNATURE
 TODO
 lib/Unicode/Stringprep.pm
 lib/Unicode/Stringprep/BiDi.pm

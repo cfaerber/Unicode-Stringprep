@@ -1,5 +1,9 @@
 Revision history for Perl extension Net::IDN::Encode
 
+1.02 Sun Dec 13 00:00:00 2009
+	- FIXES: #52734: Undeclared dependency on Test::NoWarnings
+	  reported by ANDK
+
 1.01 Thu Dec 10 00:00:00 2009
 	- release 1.00_20080919 as 1.01
 	- add Example.pod

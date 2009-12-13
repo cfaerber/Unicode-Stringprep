@@ -12,6 +12,8 @@ WriteMakefile(
 	'VERSION_FROM'	=> 'lib/Unicode/Stringprep.pm', # finds $VERSION
 	'PREREQ_PM'	=> {
 		'Unicode::Normalize' => 0.30,
+		'Test::NoWarnings' => 0,
+		'Test::More' => 0,
 	    },
 	'ABSTRACT'	=> 'Preparation of Internationalized Strings (RFC 3454)',
 	'AUTHOR'	=> 'Claus Faerber <CFAERBER@cpan.org>',
