@@ -1,5 +1,3 @@
-# $Id$
-
 package Unicode::Stringprep::Mapping;
 
 use strict;

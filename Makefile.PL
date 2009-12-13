@@ -1,4 +1,4 @@
-# $Id$
+#!/usr/bin/perl
 
 BEGIN { require 5.006; }
 
@@ -27,6 +27,10 @@ WriteMakefile(
   		'META_MERGE'	=> { 
 			'requires'	=> { 'perl'	=> 5.006, },
 			'recommends'	=> { 'perl'	=> 5.008003, },
+			'resources' => {
+				'homepage' => 'http://search.cpan.org/dist/Unicode-Stringprep',
+				'repository' => 'http://github.com/cfaerber/Unicode-Stringprep',
+		    	},
 		    },
 	    ),
 );

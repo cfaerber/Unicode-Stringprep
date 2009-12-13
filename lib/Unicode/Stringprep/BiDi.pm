@@ -1,5 +1,3 @@
-# $Id: BiDi.pm 35 2007-09-12 20:39:14Z cfaerber $
-
 package Unicode::Stringprep::BiDi;
 
 use strict;

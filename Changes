@@ -31,5 +31,3 @@ Revision history for Perl extension Net::IDN::Encode
 	- first public developer release
 	- based on RFC 3454, includes test vectors from Internet
 	  Draft draft-josefsson-idn-test-vectors-00.
-
-$Id$

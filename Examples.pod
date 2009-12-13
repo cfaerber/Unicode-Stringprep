@@ -1,8 +1,6 @@
-# $Id: $
-
 =encoding utf8
 
-=head1 EXAMPLES
+=head1 SIMPLE EXAMPLE
 
 Writing a module implementing a Stringprep profile is very easy: Simply call C<Unicode::Stringprep->new> with the correct parameters and bind
 the returned function variable (closure) to a name of your module.
@@ -43,9 +41,15 @@ The following is a complete functional module implementing S<RFC 3491>:
   
   1;
 
-=head1 SEE ALSO
+=head1 MORE EXAMPLES
 
-For a more elaborate version including documentation, see: L<Net::IDN::Nameprep>.
+For more elaborate examples including examples for documentation, see
+L<Authen::SASL::SASLprep> and L<Net::IDN::Nameprep>.
+
+=head1 ROLL YOUR OWN
+
+If you want to write a perl module implementing a Stringprep profile, the
+easiest way is to fork L<Authen::SASL::SASLprep> from
+L<http://github.com/cfaerber/Authen-SASL-SASLprep>.
 
 =cut
-
