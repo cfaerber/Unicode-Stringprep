@@ -33,12 +33,9 @@ WriteMakefile(
 
 sub MY::postamble {
 return <<EOF
-release: release-sf release-cpan
+release: release-cpan
 
 release-cpan:
 	cpan-upload \$(DISTVNAME).tar\$(SUFFIX)
-
-release-sf:
-	sf-upload -groupid 112466 -packageid 246624 -r \$(VERSION) -cf Changes -nf README -f \$(DISTVNAME).tar\$(SUFFIX)
 EOF
 }
