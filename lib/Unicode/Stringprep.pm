@@ -268,8 +268,7 @@ profile, such as L<Net::IDN::Nameprep>.
 
 =head1 IMPLEMENTING PROFILES
 
-You can easily implement a I<stringprep> profile without
-subclassing:
+You can easily implement a I<stringprep> profile without subclassing:
 
   package ACME::ExamplePrep;
 
@@ -280,14 +279,10 @@ subclassing:
 
   *exampleprep = Unicode::Stringprep->new(
     3.2,
-    [ 
-      \@Unicode::Stringprep::Mapping::B1, 
-    ],
+    [ \@Unicode::Stringprep::Mapping::B1, ],
     '',
-    [
-      \@Unicode::Stringprep::Prohibited::C12,
-      \@Unicode::Stringprep::Prohibited::C22,
-    ],
+    [ \@Unicode::Stringprep::Prohibited::C12,
+      \@Unicode::Stringprep::Prohibited::C22, ],
     1,
   );
 

@@ -17,4 +17,6 @@ t/11pod_cover.t
 t/nameprep.t
 t/nameprep_st.t
 t/saslprep.t
-Examples.pod
+eg/Examples.pod
+eg/Nameprep.pm
+eg/SASLprep.pm
