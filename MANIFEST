@@ -3,7 +3,6 @@ Changes
 LICENSE
 MANIFEST
 Makefile.PL
-TODO
 lib/Unicode/Stringprep.pm
 lib/Unicode/Stringprep/BiDi.pm
 lib/Unicode/Stringprep/Mapping.pm
