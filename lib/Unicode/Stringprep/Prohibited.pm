@@ -127,8 +127,6 @@ END
 
 __END__
 
-=encoding utf8
-
 =head1 NAME
 
 Unicode::Stringprep::Prohibited - Tables from S<RFC 3454>, S<Appendix C>
@@ -157,17 +155,17 @@ This module exports nothing.
 
 =head1 AUTHOR
 
-Claus Färber E<lt>CFAERBER@cpan.orgE<gt>
+Claus FE<auml>rber E<lt>CFAERBER@cpan.orgE<gt>
 
 =head1 LICENSE
 
-Copyright © 2007-2008 Claus Färber. All rights reserved.
+Copyright 2007-2009 Claus FE<auml>rber.
 
 This library is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-L<Unicode::Stringprep>, S<RFC 3454> L<http://www.ietf.org/rfc/rfc3454.txt>
+L<Unicode::Stringprep>, S<RFC 3454> (L<http://www.ietf.org/rfc/rfc3454.txt>)
 
 =cut

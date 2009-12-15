@@ -173,8 +173,6 @@ sub _compile_bidi {
 1;
 __END__
 
-=encoding utf8
-
 =head1 NAME
 
 Unicode::Stringprep - Preparation of Internationalized Strings (S<RFC 3454>)
@@ -363,17 +361,17 @@ make sure that these characters are not present).
 
 =head1 AUTHOR
 
-Claus Färber <CFAERBER@cpan.org>
+Claus FE<auml>rber <CFAERBER@cpan.org>
 
 =head1 LICENSE
 
-Copyright © 2007-2008 Claus Färber. All rights reserved.
+Copyright 2007-2009 Claus FE<auml>rber.
 
 This library is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-L<Unicode::Normalize>, S<RFC 3454> L<http://www.ietf.org/rfc/rfc3454.txt>
+L<Unicode::Normalize>, S<RFC 3454> (L<http://www.ietf.org/rfc/rfc3454.txt>)
 
 =cut

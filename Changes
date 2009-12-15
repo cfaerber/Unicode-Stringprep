@@ -1,6 +1,7 @@
 Revision history for Perl extension Unicode::Stringprep
 
 	- switch to Module::Build
+	- only use ASCII in POD, fixes FAILs with perl 5.6.x
 
 1.02 Sun Dec 13 00:00:00 2009
 	- FIXES: #52734: Undeclared dependency on Test::NoWarnings
