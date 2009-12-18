@@ -77,7 +77,7 @@ sub _compile_mapping {
      my $map = shift;
      if($#_ <= 7) {
        return (join '', (map { '$char == '.$_.
-        ' ? "'.(join '', map { s/[\/\$\@\%\&\\]/\\$1/g; $_; } ( $$map{$_} )).'"'.
+        ' ? "'.(join '', map { quotemeta($_); } ( $$map{$_} )).'"'.
         '   : ' } @_)).' die';
      } else {
       my @a = splice @_, 0, int($#_/2);

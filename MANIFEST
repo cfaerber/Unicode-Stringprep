@@ -13,7 +13,6 @@ t/00_use.t
 t/01_references.t
 t/10_pod_check.t
 t/11_pod_coverage.t
-t/20_internal_u8_a.t
 t/30_mappings.t
 t/31_prohibited_characters.t
 t/31_prohibited_characters_extra.t
