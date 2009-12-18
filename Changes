@@ -1,6 +1,6 @@
 Revision history for Perl extension Unicode::Stringprep
 
-1.02_20091218 Fri Dec 19 00:00:00:00
+1.09_20091218 Fri Dec 19 00:00:00:00
 	- use bytes instead of native UTF8 support (EXPERIMENTAL)
 
 	- switch to Module::Build
