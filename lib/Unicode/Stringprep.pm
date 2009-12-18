@@ -1,7 +1,7 @@
 package Unicode::Stringprep;
 
 use strict;
-use utf8;
+use bytes;
 use warnings;
 require 5.006_000;
 
@@ -83,7 +83,7 @@ sub _compile_mapping {
 
   sub _compile_mapping_r { 
      my $map = shift;
-     if($#_ <= 20000) {
+     if($#_ <= 7) {
        return (join '', (map { '$char == '.$_.
         ' ? "'._u8_qmeta($$map{$_}).'"'.
         '   : ' } @_)).' die sprintf("Internal error: U+%04X not expected",$char)';
@@ -220,26 +220,23 @@ sub _compile_prohibited {
   }
 }
 
-our $is_RandAL = _compile_set(@Unicode::Stringprep::BiDi::D1);
-our $is_L = _compile_set(@Unicode::Stringprep::BiDi::D2);
+*_check_bidi = eval 'sub{use bytes; my $string=shift;'._compile_bidi().'}';
 
-our $re_is_RandAL = eval 'qr/'.$is_RandAL.'/';
-our $re_is_RandALstart = eval 'qr/^'.$is_RandAL.'/';
-our $re_is_RandALend = eval 'qr/'.$is_RandAL.'$/';
-our $re_is_L = eval 'qr/'.$is_L.'/';
+sub _compile_bidi {
+  use bytes;
+  my $is_RandAL = _compile_set(@Unicode::Stringprep::BiDi::D1);
+  my $is_L = _compile_set(@Unicode::Stringprep::BiDi::D2);
 
-sub _check_bidi {
-  my $string = shift;
-
-  if($string =~ m/$is_RandAL/) {
-    if($string =~ m/$is_L/) {
-        die "string contains both RandALCat and LCat characters";
-      } elsif($string !~ m/^($is_RandAL)/) {
-        die "string contains RandALCat character but does not start with one";
-      } elsif($string !~ m/($is_RandAL)$/) {
-        die "string contains RandALCat character but does not end with one";
-      };
-    };
+  return 
+    'if($string =~ m/'.$is_RandAL.'/) {'.
+      'if($string =~ m/'.$is_L.'/) {'.
+        'die "string contains both RandALCat and LCat characters"'.
+      '} elsif($string !~ m/^('.$is_RandAL.')/) {'.
+        'die "string contains RandALCat character but does not start with one"'.
+      '} elsif($string !~ m/('.$is_RandAL.')$/) {'.
+        'die "string contains RandALCat character but does not end with one"'.
+      '}'.
+    '}';
 }
 
 sub _check_malformed {
