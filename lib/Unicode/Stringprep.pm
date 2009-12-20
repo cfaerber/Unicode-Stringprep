@@ -1,11 +1,11 @@
 package Unicode::Stringprep;
 
 use strict;
-use bytes;
+use utf8;
 use warnings;
 require 5.006_000;
 
-our $VERSION = '1.09_20091218';
+our $VERSION = '1.09_20091221';
 $VERSION = eval $VERSION;
 
 require Exporter;
@@ -30,6 +30,7 @@ sub new {
 ## Here be eval dragons
 
 sub _compile {
+
   my $unicode_version = shift;
   my $mapping_tables = shift;
   my $unicode_normalization = uc shift;
@@ -39,34 +40,46 @@ sub _compile {
   croak 'Unsupported UNICODE version '.$unicode_version.'.' 
     unless $unicode_version == 3.2;
 
-  my $code = 'no warnings "utf8";'.
+  my $code = 'use utf8; no warnings "utf8";'.
     'my $string = shift;';
-  my $u8_status = 2;
+
+#	$code .= 'print STDERR Dumper($string);';
+  $code .= '_u8_up($string);';
+
+use Data::Dumper;
+$Data::Dumper::Useqq = 1;
+
+  my $u8_status = 1;
 
   my $cs = sub {
-    my($u8,$new_code) = @_;
+    my($u8,$new_code,$tag) = @_;
     return unless $new_code;
+
+#	# $code .= 'print STDERR "'.quotemeta($tag).'\n";';
+#	# $code .= 'print STDERR Dumper($string);';
+
     $code .= '_u8_on ($string);' if $u8_status < $u8;
     $code .= '_u8_off($string);' if $u8_status > $u8;
-    $code .= '{ use '.($u8 ? 'utf8' : 'bytes').';';
-    $code .= $new_code."}\n";
+
+#	# $code .= 'print STDERR Dumper($string);';
+    $code .= $new_code.";\n";
+#	# $code .= 'print STDERR Dumper($string);';
     $u8_status = $u8;
   };
 
-  $cs->(0, '_check_malformed($string, "at input")');
-  $cs->(0, _compile_mapping($mapping_tables));
-  $cs->(1, _compile_normalization($unicode_normalization));
-  $cs->(0, _compile_prohibited($prohibited_tables));
-  $cs->(0, $bidi_check ? '_check_bidi($string)' : undef);
+  $cs->(0, '_check_malformed($string, "at input")', 'malformed');
+  $cs->(0, _compile_mapping($mapping_tables), 'mapping');
+  $cs->(1, _compile_normalization($unicode_normalization), 'normalization');
+  $cs->(0, _compile_prohibited($prohibited_tables), 'prohibited');
+  $cs->(0, $bidi_check ? '_check_bidi($string)' : undef, 'bidi');
   #$cs->(0, '_check_malformed($string, "at output")');
-  $cs->(1, 'return $string');
+  $cs->(1, 'return $string', 'return');
 
-# print STDERR "$code";
+#	# print STDERR "$code";
   return eval "sub{$code}" || die $@;
 }
 
 sub _compile_mapping {
-  use bytes;
   my %map = ();
   sub _mapping_tables {
     my $map = shift;
@@ -84,9 +97,15 @@ sub _compile_mapping {
   sub _compile_mapping_r { 
      my $map = shift;
      if($#_ <= 7) {
-       return (join '', (map { '$char == '.$_.
-        ' ? "'._u8_qmeta($$map{$_}).'"'.
-        '   : ' } @_)).' die sprintf("Internal error: U+%04X not expected",$char)';
+       return join('', map( 
+         {
+           my $ret = $$map{$_};
+           _u8_up($ret); _u8_off($ret);
+
+           '$char == '.$_.
+           ' ? "'._u8_qmeta($ret).'"'.
+           '   : ' 
+         } @_)).' die sprintf("Internal error: U+%04X not expected",$char)';
      } else {
       my @a = splice @_, 0, int($#_/2);
       return '$char < '.$_[0].' ? ('.
@@ -115,6 +134,7 @@ sub _compile_normalization {
 }
 
 sub _compile_set {
+
   my @collect = ();
   sub _set_tables {
     my $set = shift;
@@ -155,16 +175,15 @@ sub _compile_set {
   return undef if !@set;
 
   sub _set_str {
-    use bytes;
     my($a,$b) = @_;
     my $l = length($a);
-    die if $l != length($b); 	# should not happen!
+    confess 'internal error '."<$a><$b>" if $l != length($b); 	# should not happen!
 
     return _u8_qmeta($a) if $a eq $b;
 
     if($l <= 1) {
-      return '['._b_qmeta($a)._b_qmeta($b).']' if ord($a) >= ord($b)-1;
-      return '['._b_qmeta($a).'-'._b_qmeta($b).']';
+      return '['._u8_qmeta($a)._u8_qmeta($b).']' if ord($a) >= ord($b)-1;
+      return '['._u8_qmeta($a).'-'._u8_qmeta($b).']';
     }
 
     my $a1 = substr($a, 0, 1); my $a2 = substr($a, 1);
@@ -175,7 +194,7 @@ sub _compile_set {
     my $max = chr(0x80 + 0x3F) x $l2;
 
     if($a1 eq $b1) {
-      return _b_qmeta($a1)._set_str($a2, $b2);
+      return _u8_qmeta($a1)._set_str($a2, $b2);
     }
 
     if($a2 ne $min) {
@@ -195,11 +214,15 @@ sub _compile_set {
     return _set_str(map { _u8_chr(hex($_)) } @_);
   }
 
+  sub _set_str_chr {
+    return _set_str_u8(map { sprintf '%04X', $_ } @_);
+  }
+
 #  foreach (@set) {
-#   printf STDERR "[%04X-%04X]: <%s>\n", @{$_} , _set_str_u8(map { sprintf '%X', $_} @{$_});
+#	#   printf STDERR "[%04X-%04X]: <%s>\n", @{$_} , _set_str_u8(map { sprintf '%X', $_} @{$_});
 #  };
 
-  return join '|', map { _set_str( map { _u8_chr($_) } @{$_}) } @set;
+  return join '|', map { _set_str_chr( @{$_} ) } @set;
 
   return '['.join('', map {
     sprintf( $_->[0] >= $_->[1] 
@@ -220,53 +243,52 @@ sub _compile_prohibited {
   }
 }
 
-*_check_bidi = eval 'sub{use bytes; my $string=shift;'._compile_bidi().'}';
-
-sub _compile_bidi {
-  use bytes;
+sub _check_bidi {
   my $is_RandAL = _compile_set(@Unicode::Stringprep::BiDi::D1);
   my $is_L = _compile_set(@Unicode::Stringprep::BiDi::D2);
 
-  return 
-    'if($string =~ m/'.$is_RandAL.'/) {'.
-      'if($string =~ m/'.$is_L.'/) {'.
-        'die "string contains both RandALCat and LCat characters"'.
-      '} elsif($string !~ m/^('.$is_RandAL.')/) {'.
-        'die "string contains RandALCat character but does not start with one"'.
-      '} elsif($string !~ m/('.$is_RandAL.')$/) {'.
-        'die "string contains RandALCat character but does not end with one"'.
-      '}'.
-    '}';
+  my $s = sub {
+    my $string = shift;
+
+    if($string =~ m/$is_RandAL/) {
+      if($string =~ m/$is_L/) {
+        die "string contains both RandALCat and LCat characters"
+      } elsif($string !~ m/^($is_RandAL)/) {
+        die "string contains RandALCat character but does not start with one"
+      } elsif($string !~ m/($is_RandAL)$/) {
+        die "string contains RandALCat character but does not end with one"
+      }
+    }
+  };
+
+  {
+    no warnings 'redefine';
+    *_check_bidi = $s;
+  }
+  return _check_bidi(@_);
 }
 
 sub _check_malformed {
-  my $string = shift;
 
-  $string =~ m/^(?:[\x00-\x7f]|[\xc0-\xdf][\x80-\xbf]|[\xe0-\xef][\x80-\xbf]{2}|[\xf0-\xf7][\x80-\xbf]{3})*([\x80-\xFF]+)?/;
-  die "malformed UTF-8 sequence ".shift().": "._u8_qmeta($1)." (len ".length($1).")" if(defined $1);
+#  my $string = shift;
+#  $string =~ m/^(?:[\x00-\x7f]|[\xc0-\xdf][\x80-\xbf]|[\xe0-\xef][\x80-\xbf]{2}|[\xf0-\xf7][\x80-\xbf]{3})*([\x80-\xFF]+)?/;
+#  die "malformed UTF-8 sequence ".shift().": "._u8_qmeta($1)." (len ".length($1).")" if(defined $1);
 }
 
 ## utf8 helpers
 
-sub _u8_ord { no warnings 'utf8'; use bytes; unpack('U0U', shift); }
-sub _u8_chr { no warnings 'utf8'; use bytes; pack('U', shift); }
+sub _u8_ord { no warnings 'utf8'; my $r=shift; _u8_on($r); ord($r); }
+sub _u8_chr { no warnings 'utf8'; my $r=chr(shift); _u8_off($r); $r; }
 
-sub _u8_a { unpack 'C*', _u8_chr shift }
-
-*_u8_off = ($] < 5.007001) ? sub { $_[0].=pack('U*'); } : \&utf8::encode;
-*_u8_on  = ($] < 5.007001) ? sub { $_[0]=pack('U*', unpack 'U0U*', $_[0]); } : \&utf8::decode;
-
-sub _b_qmeta {
-  use bytes;
-  return ord($_[0]) < 128
-    ? quotemeta($_[0]) 
-    : sprintf('\x%02X', ord($_[0])); 
-}
+*_u8_up  = \&utf8::upgrade;
+*_u8_off = ($] < 5.007001) ? sub { } : \&utf8::encode;
+*_u8_on  = ($] < 5.007001) ? sub { } : \&utf8::decode;
 
 sub _u8_qmeta {
-  use bytes;
-  return undef if !defined $_[0];
-  return join '', map { _b_qmeta($_) } split //, shift || '';
+  my $m = shift;
+  $m =~ s/([^\x00-\x20\x7F-\xFFA-Za-z0-9_-])/ "\\$1" /ge;
+  $m =~ s/([\x00-\x20\x7F-\xFF])/ sprintf "\\x%02X", ord($1) /ge;
+  return $m;
 }
 
 1;

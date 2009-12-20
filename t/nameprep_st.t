@@ -6,6 +6,8 @@ use Test::NoWarnings;
 
 no warnings 'utf8';
 
+binmode STDOUT, ':utf8';
+
 use Unicode::Stringprep;
 
 our @strprep = (
