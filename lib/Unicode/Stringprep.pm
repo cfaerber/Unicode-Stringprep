@@ -5,7 +5,7 @@ use utf8;
 use warnings;
 require 5.006_000;
 
-our $VERSION = '1.09_70091226';
+our $VERSION = '1.09_70091227';
 $VERSION = eval $VERSION;
 
 require Exporter;
