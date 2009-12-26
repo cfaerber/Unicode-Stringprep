@@ -5,7 +5,7 @@ use utf8;
 use warnings;
 require 5.006_000;
 
-our $VERSION = '1.02';
+our $VERSION = '1.09_70091226';
 $VERSION = eval $VERSION;
 
 require Exporter;
@@ -42,11 +42,14 @@ sub _compile {
   my $mapping_sub = _compile_mapping($mapping_tables);
   my $normalization_sub = _compile_normalization($unicode_normalization);
   my $prohibited_sub = _compile_prohibited($prohibited_tables);
-  my $bidi_sub = $bidi_check ? _compile_bidi() : undef;
+  my $bidi_sub = $bidi_check ? '_check_bidi($string)' : undef;
 
   my $code = "sub { no warnings 'utf8';".
-   'my $string = shift;'.
-   join('', map { $_ ? "{$_}\n" : ''} (
+   'my $string = shift;';
+
+  $code .= '$string .= pack("U0");' if $] < 5.008;
+
+  $code .= join('', map { $_ ? "{$_}\n" : ''} (
       $mapping_sub,
       $normalization_sub,
       $prohibited_sub,
@@ -91,9 +94,10 @@ sub _compile_mapping {
 
   my @from = sort { $a <=> $b } keys %map;
 
-  return sprintf '$string =~ s/([%s])/my $char = ord($1); %s /ge;',
-    (join '', (map { sprintf '\\x{%04X}', $_; } @from)),
-    _compile_mapping_r(\%map, @from);
+  return undef if !@from;
+
+  return '$string =~ s/('._compile_set( map { $_ => $_ } @from).')/my $char = ord($1); '.
+      _compile_mapping_r(\%map, @from).'/ge;',
 }
 
 sub _compile_normalization {
@@ -133,14 +137,14 @@ sub _compile_set {
     }
   }
 
-  return join '', map {
-    sprintf( $_->[0] >= $_->[1] 
-      ? "\\x{%04X}"
-      : "\\x{%04X}-\\x{%04X}",
-      @{$_})
-    } @set;
+  return undef if !@set;
 
-  return _set_compile(@set);
+  return '['.join('', map {
+    sprintf( $_->[0] >= $_->[1] 
+      ? "\\x{%X}"
+      : "\\x{%X}-\\x{%X}",
+      @{$_})
+    } @set ).']';
 }
 
 sub _compile_prohibited {
@@ -148,27 +152,38 @@ sub _compile_prohibited {
 
   if($prohibited_sub) {
     return 
-      'if($string =~ m/(['.$prohibited_sub.'])/) {'.
+      'if($string =~ m/('.$prohibited_sub.')/) {'.
           'die sprintf("prohibited character U+%04X",ord($1))'.
       '}';
   }
 }
 
-sub _compile_bidi {
+
+sub _check_bidi {
   my $is_RandAL = _compile_set(@Unicode::Stringprep::BiDi::D1);
   my $is_L = _compile_set(@Unicode::Stringprep::BiDi::D2);
+ 
+  my $s = sub {
+    my $string = shift;
 
-  return 
-    'if($string =~ m/['.$is_RandAL.']/) {'.
-      'if($string =~ m/['.$is_L.']/) {'.
-        'die "string contains both RandALCat and LCat characters"'.
-      '} elsif($string !~ m/^['.$is_RandAL.']/) {'.
-        'die "string contains RandALCat character but does not start with one"'.
-      '} elsif($string !~ m/['.$is_RandAL.']$/) {'.
-        'die "string contains RandALCat character but does not end with one"'.
-      '}'.
-    '}';
+    if($string =~ m/$is_RandAL/) {
+      if($string =~ m/$is_L/) {
+        die "string contains both RandALCat and LCat characters"
+      } elsif($string !~ m/^(?:$is_RandAL)/) {
+        die "string contains RandALCat character but does not start with one"
+      } elsif($string !~ m/(?:$is_RandAL)$/) {
+        die "string contains RandALCat character but does not end with one"
+      }
+    }
+  };
+
+  {
+    no warnings 'redefine';
+    *_check_bidi = $s;
+  }
+  return _check_bidi(@_);
 }
+
 
 1;
 __END__
@@ -223,7 +238,7 @@ This module exports nothing.
 Creates a C<bless>ed function reference that implements a stringprep profile.
 
 C<$unicode_version> is the Unicode version specified by the
-stringprep profile. Currently, this must be C<3.2>.
+stringprep profile. Currently, this parameter must be C<3.2>.
 
 C<$mapping_tables> provides the mapping tables used for
 stringprep.  It may be a reference to a hash or an array. A hash
