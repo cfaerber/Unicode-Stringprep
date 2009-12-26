@@ -4,9 +4,9 @@ use utf8;
 use Test::More;
 use Test::NoWarnings;
 
-no warnings 'utf8';
-
 use Unicode::Stringprep;
+
+no warnings 'utf8';
 
 our @strprep = (
      [

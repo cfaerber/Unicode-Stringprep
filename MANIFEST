@@ -2,6 +2,7 @@ README
 Changes
 LICENSE
 MANIFEST
+Build.PL
 Makefile.PL
 lib/Unicode/Stringprep.pm
 lib/Unicode/Stringprep/BiDi.pm
@@ -17,8 +18,10 @@ t/30_mappings.t
 t/31_prohibited_characters.t
 t/31_prohibited_characters_extra.t
 t/nameprep.t
-t/nameprep_st.t
+t/nameprep_stored.t
+t/nameprep_bytes.t
 t/saslprep.t
+t/saslprep_bytes.t
 eg/Examples.pod
 eg/Nameprep.pm
 eg/SASLprep.pm

@@ -8,8 +8,6 @@ use Test::NoWarnings;
 
 use Unicode::Stringprep;
 
-binmode STDOUT, ":utf8";
-
 our @strprep = (
      [
        "Map to nothing",

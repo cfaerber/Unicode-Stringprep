@@ -5,7 +5,7 @@ use utf8;
 use warnings;
 require 5.006_000;
 
-our $VERSION = '1.09_70091226';
+our $VERSION = "1.09_70091228"; # +_5000 b/c _2009 is occupied by with-use-bytes branch
 $VERSION = eval $VERSION;
 
 require Exporter;
@@ -20,6 +20,8 @@ use Unicode::Stringprep::Unassigned;
 use Unicode::Stringprep::Mapping;
 use Unicode::Stringprep::Prohibited;
 use Unicode::Stringprep::BiDi;
+
+our $WARNINGS = 1;
 
 sub new {
   my $self  = shift;
@@ -37,7 +39,11 @@ sub _compile {
   my $bidi_check = shift;
 
   croak 'Unsupported UNICODE version '.$unicode_version.'.' 
-    unless $unicode_version == 3.2;
+    if $unicode_version != 3.2;
+
+  carp 'UNICODE version '.$unicode_version.' not fully'.
+	' supported by your perl (version '.$].')'
+    if $WARNINGS && ($] <= 5.008000);
 
   my $mapping_sub = _compile_mapping($mapping_tables);
   my $normalization_sub = _compile_normalization($unicode_normalization);
@@ -138,6 +144,13 @@ sub _compile_set {
   }
 
   return undef if !@set;
+
+  if ($WARNINGS && ($] <= 5.008003)) {
+    if(grep { $_->[0] <= 0xDFFF && $_->[1] >= 0xD800 } @set) {
+      carp 'UNICODE surrogate pairs (U+D800..U+DFFF) cannot be handled'.
+	' by your perl (version '.$].')';
+    }
+  }
 
   return '['.join('', map {
     sprintf( $_->[0] >= $_->[1] 
@@ -368,6 +381,9 @@ If a profile tries to map these characters, they won't be mapped
 If a profile prohibits these characters, this module may fail to
 detect them (currently, all profiles do that, so B<you> have to
 make sure that these characters are not present).
+
+If any of these problems is detected, this module will issue a
+warning unless C<$Unicode::Stringprep::WARNINGS> is set to false.
 
 =head1 AUTHOR
 
