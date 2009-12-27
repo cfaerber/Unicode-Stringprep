@@ -9,7 +9,7 @@ lib/Unicode/Stringprep/BiDi.pm
 lib/Unicode/Stringprep/Mapping.pm
 lib/Unicode/Stringprep/Prohibited.pm
 lib/Unicode/Stringprep/Unassigned.pm
-lib/Unicode/Stringprep/_Common.pm
+lib/Unicode/Stringprep/_Util.pm
 t/00_use.t
 t/01_references.t
 t/10_pod_check.t

@@ -5,9 +5,10 @@ use utf8;
 use warnings;
 require 5.006_000;
 
-our $VERSION = '1.01';
+our $VERSION = "1.09_20091227";
+$VERSION = eval $VERSION;
 
-use Unicode::Stringprep::_Common;
+use Unicode::Stringprep::_Util;
 
 our @D1 = _mk_set(<<END);
    05BE

@@ -21,6 +21,8 @@ use Unicode::Stringprep::Mapping;
 use Unicode::Stringprep::Prohibited;
 use Unicode::Stringprep::BiDi;
 
+use Unicode::Stringprep::_Util('_compile_set');
+
 our $WARNINGS = 1;
 
 sub new {
@@ -65,7 +67,6 @@ sub _compile {
 
   return eval $code || die $@;
 }
-
 
 sub _compile_mapping {
   my %map = ();
@@ -116,50 +117,6 @@ sub _compile_normalization {
   croak 'Unsupported UNICODE normalization (NF)'.$unicode_normalization.'.';
 }
 
-sub _compile_set {
-  my @collect = ();
-  sub _set_tables {
-    my $set = shift;
-    while(@_) {
-      my $data = shift;
-      if(ref($data) eq 'HASH') { _set_tables($set, %{$data}); }
-      elsif(ref($data) eq 'ARRAY') { _set_tables($set, @{$data}); }
-      else{ push @{$set}, [$data,shift || $data] };
-    }
-  }
-  _set_tables(\@collect,@_);
-
-  # NB: This destroys @collect as it modifies the anonymous ARRAYs
-  # referenced in @collect.
-  # This is harmless as it only modifies ARRAYs after they've been
-  # inspected.
-
-  my @set = ();
-  foreach my $d (sort { $a->[0]<=>$b->[0] } @collect) {
-    if(!@set || $set[$#set]->[1]+1 < $d->[0]) {
-      push @set, $d;
-    } elsif($set[$#set]->[1] < $d->[1]) {
-      $set[$#set]->[1] = $d->[1];
-    }
-  }
-
-  return undef if !@set;
-
-  if ($WARNINGS && ($] <= 5.008003)) {
-    if(grep { $_->[0] <= 0xDFFF && $_->[1] >= 0xD800 } @set) {
-      carp 'UNICODE surrogate pairs (U+D800..U+DFFF) cannot be handled'.
-	' by your perl (version '.$].')';
-    }
-  }
-
-  return '['.join('', map {
-    sprintf( $_->[0] >= $_->[1] 
-      ? "\\x{%X}"
-      : "\\x{%X}-\\x{%X}",
-      @{$_})
-    } @set ).']';
-}
-
 sub _compile_prohibited {
   my $prohibited_sub = _compile_set(@_);
 
@@ -170,7 +127,6 @@ sub _compile_prohibited {
       '}';
   }
 }
-
 
 sub _check_bidi {
   my $is_RandAL = _compile_set(@Unicode::Stringprep::BiDi::D1);
@@ -359,12 +315,16 @@ C<Unicode::Stringprep>.
 
 =back
 
-=head1 PERL VERSION
+=head1 BUGS
 
-You should use perl 5.8.3 or higher.
+This module actually needs perl 5.8.3 to work correctly but only declares perl
+5.6.x as a requirement.
 
-While this module does work with earlier perl versions, there are
-some limitations:
+This will be fixed when L<Net::IDN::Encode> is updated for IDNA 2008, which no
+longer relies on Stringprep and thus Unicode 3.2 Normalization.
+
+While this module does work with earlier perl versions, there are some
+limitations:
 
 Perl 5.6 does not promote strings to UTF-8 automatically.
 B<You> have to make sure that you only pass valid UTF-8 strings to
