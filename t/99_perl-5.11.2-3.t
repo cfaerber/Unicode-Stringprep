@@ -3,7 +3,7 @@ use utf8;
 
 no warnings 'utf8';
 
-use Test::More;
+use Test::More tests => 20;
 use Test::NoWarnings;
 
 use Unicode::Stringprep;
@@ -19,7 +19,6 @@ use Unicode::Stringprep;
 #       "Nameprep"
 #     ],
 
-plan tests => 17 + 1;
 
 sub mk {
   my @d = map { $_ || undef; } @_;
@@ -57,3 +56,7 @@ is( mk(0,1,1,1)->("\x{2000}"), ' ',		'U+2000 (normalization+prohibited+bidi)' );
 is( mk(1,1,1,1)->("\x{2000}"), " ",		'U+2000 (complete)' );
 
 is( Unicode::Normalize::NFKC("\x{2000}"), " ", 	'U+2000 (Unicode::Normalize::NFKC)' );
+
+no bytes; # make bytes::length available
+is( bytes::length("\x{2000}"), 3,	'bytes::length of U+2000 char literal');
+is( bytes::length(chr(hex(2000))), 3,	'bytes::length of U+2000 chr() output');
