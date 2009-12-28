@@ -1,11 +1,12 @@
 package Unicode::Stringprep;
 
+require 5.8.3;
+
 use strict;
 use utf8;
 use warnings;
-require 5.006_000;
 
-our $VERSION = "1.09_70091229"; # +_5000 b/c _2009 is occupied by with-use-bytes branch
+our $VERSION = "1.09_70091230"; # +_5000 b/c _2009 is occupied by with-use-bytes branch
 $VERSION = eval $VERSION;
 
 require Exporter;
@@ -20,8 +21,6 @@ use Unicode::Stringprep::Unassigned;
 use Unicode::Stringprep::Mapping;
 use Unicode::Stringprep::Prohibited;
 use Unicode::Stringprep::BiDi;
-
-our $WARNINGS = 1;
 
 sub new {
   my $self  = shift;
@@ -40,10 +39,6 @@ sub _compile {
 
   croak 'Unsupported Unicode version '.$unicode_version.'.' 
     if $unicode_version != 3.2;
-
-  carp 'Unicode version '.$unicode_version.' not fully'.
-	' supported by your perl (version '.$].')'
-    if $WARNINGS && ($] <= 5.008000);
 
   my $mapping_sub = _compile_mapping($mapping_tables);
   my $normalization_sub = _compile_normalization($unicode_normalization);
@@ -139,13 +134,6 @@ sub _compile_set {
   }
 
   return undef if !@set;
-
-  if ($WARNINGS && ($] <= 5.008003)) {
-    if(grep { $_->[0] <= 0xDFFF && $_->[1] >= 0xD800 } @set) {
-      carp 'Unicode surrogate pairs (U+D800..U+DFFF) cannot be handled'.
-	' by your perl (version '.$].')';
-    }
-  }
 
   return '['.join('', map {
     sprintf( $_->[0] >= $_->[1] 
