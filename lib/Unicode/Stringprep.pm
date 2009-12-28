@@ -38,10 +38,10 @@ sub _compile {
   my $prohibited_tables = shift;
   my $bidi_check = shift;
 
-  croak 'Unsupported UNICODE version '.$unicode_version.'.' 
+  croak 'Unsupported Unicode version '.$unicode_version.'.' 
     if $unicode_version != 3.2;
 
-  carp 'UNICODE version '.$unicode_version.' not fully'.
+  carp 'Unicode version '.$unicode_version.' not fully'.
 	' supported by your perl (version '.$].')'
     if $WARNINGS && ($] <= 5.008000);
 
@@ -49,6 +49,7 @@ sub _compile {
   my $normalization_sub = _compile_normalization($unicode_normalization);
   my $prohibited_sub = _compile_prohibited($prohibited_tables);
   my $bidi_sub = $bidi_check ? '_check_bidi($string)' : undef;
+  my $pr29_sub = (defined $normalization_sub) ? '_check_pr29($string)' : undef;
 
   my $code = "sub { no warnings 'utf8';".
    'my $string = shift;';
@@ -60,13 +61,16 @@ sub _compile {
       $mapping_sub,
       $normalization_sub,
       $prohibited_sub,
-      $bidi_sub ).
+      $bidi_sub,
+      $pr29_sub ).
       'return $string;'.
     '}';
 
   return eval $code || die $@;
 }
 
+## generic compilation functions for matching/mapping characters
+##
 
 sub _compile_mapping {
   my %map = ();
@@ -107,16 +111,6 @@ sub _compile_mapping {
       _compile_mapping_r(\%map, @from).'/ge;',
 }
 
-sub _compile_normalization {
-  my $unicode_normalization = uc shift;
-  $unicode_normalization =~ s/^NF//;
-
-  return '$string = _NFKC_3_2($string)' if $unicode_normalization eq 'KC';
-  return undef if !$unicode_normalization;
-
-  croak 'Unsupported UNICODE normalization (NF)'.$unicode_normalization.'.';
-}
-
 sub _compile_set {
   my @collect = ();
   sub _set_tables {
@@ -148,7 +142,7 @@ sub _compile_set {
 
   if ($WARNINGS && ($] <= 5.008003)) {
     if(grep { $_->[0] <= 0xDFFF && $_->[1] >= 0xD800 } @set) {
-      carp 'UNICODE surrogate pairs (U+D800..U+DFFF) cannot be handled'.
+      carp 'Unicode surrogate pairs (U+D800..U+DFFF) cannot be handled'.
 	' by your perl (version '.$].')';
     }
   }
@@ -159,6 +153,39 @@ sub _compile_set {
       : "\\x{%X}-\\x{%X}",
       @{$_})
     } @set ).']';
+}
+
+## specific functions for individual stringprep steps
+##
+
+sub _compile_normalization {
+  my $unicode_normalization = uc shift;
+  $unicode_normalization =~ s/^NF//;
+
+  return '$string = _NFKC_3_2($string)' if $unicode_normalization eq 'KC';
+  return undef if !$unicode_normalization;
+
+  croak 'Unsupported Unicode normalization (NF)'.$unicode_normalization.'.';
+}
+
+my $is_Unassigned = _compile_set(@Unicode::Stringprep::Unassigned::A1);
+
+sub _NFKC_3_2 {
+  my $string = shift;
+
+  ## pre-map characters corrected in Corrigendum #4
+  ##
+  $string =~ tr/\x{2F868}\x{2F874}\x{2F91F}\x{2F95F}\x{2F9BF}/\x{2136A}\x{5F33}\x{43AB}\x{7AAE}\x{4D57}/;
+
+  ## only normalize runs of assigned characters
+  ##
+  my @s = split m/($is_Unassigned+)/o, $string;
+
+  for( my $i = 0; $i <= $#s ; $i+=2 ) { # skips delimiters == is_Unassigned
+    no warnings 'utf8';
+    $s[$i] = Unicode::Normalize::NFKC($s[$i]);
+  }
+  return join '', @s;
 }
 
 sub _compile_prohibited {
@@ -172,9 +199,23 @@ sub _compile_prohibited {
   }
 }
 
-## regexps for unassigned and combining characters in Unicode 3.2
-##
-my $is_Unassigned = _compile_set(@Unicode::Stringprep::Unassigned::A1);
+my $is_RandAL = _compile_set(@Unicode::Stringprep::BiDi::D1);
+my $is_L = _compile_set(@Unicode::Stringprep::BiDi::D2);
+
+sub _check_bidi {
+  my $string = shift;
+
+  if($string =~ m/$is_RandAL/os) {
+    if($string =~ m/$is_L/os) {
+      die "string contains both RandALCat and LCat characters"
+    } elsif($string !~ m/^(?:$is_RandAL)/os) {
+      die "string contains RandALCat character but does not start with one"
+    } elsif($string !~ m/(?:$is_RandAL)$/os) {
+      die "string contains RandALCat character but does not end with one"
+    }
+  }
+}
+
 my $is_Combining = _compile_set(  0x0300,0x0314, 0x0316,0x0319, 0x031C,0x0320,
     0x0321,0x0322, 0x0323,0x0326, 0x0327,0x0328, 0x0329,0x0333, 0x0334,0x0338,
     0x0339,0x033C, 0x033D,0x0344, 0x0347,0x0349, 0x034A,0x034C, 0x034D,0x034E,
@@ -247,61 +288,23 @@ my $is_HangulLV = _compile_set( map { ($_,$_) }     0xAC00, 0xAC1C, 0xAC38,
     0xD5AC, 0xD5C8, 0xD5E4, 0xD600, 0xD61C, 0xD638, 0xD654, 0xD670, 0xD68C,
     0xD6A8, 0xD6C4, 0xD6E0, 0xD6FC, 0xD718, 0xD734, 0xD750, 0xD76C, 0xD788, );
 
-sub _NFKC_3_2_old {
-  ## re-order characters affected by Corrigendum #5
-  ##
-  $_[0] =~ s/(\x{09C7})($is_Combining)([\x{09BE}\x{09D7}])/$1$3$2/gos;		# BENGALI VOWEL SIGN E
-  $_[0] =~ s/(\x{0B47})($is_Combining)([\x{0B3E}\x{0B56}\x{0B57}])/$1$3$2/gos;	# ORIYA VOWEL SIGN E
-  $_[0] =~ s/(\x{0BC6})($is_Combining)([\x{0BBE}\x{0BD7}])/$1$3$2/gos;		# TAMIL VOWEL SIGN E
-  $_[0] =~ s/(\x{0BC7})($is_Combining)(\x{0BBE})/$1$3$2/gos;			# TAMIL VOWEL SIGN EE
-  $_[0] =~ s/(\x{0B92})($is_Combining)(\x{0BD7})/$1$3$2/gos;			# TAMIL LETTER O
-  $_[0] =~ s/(\x{0CC6})($is_Combining)([\x{0CC2}\x{0CD5}\x{0CD6}])/$1$3$2/gos;	# KANNADA VOWEL SIGN E
-  $_[0] =~ s/([\x{0CBF}\x{0CCA}])($is_Combining)(\x{0CD5})/$1$3$2/gos;		# KANNADA VOWEL SIGN I or KANNADA VOWEL SIGN O
-  $_[0] =~ s/(\x{0D47})($is_Combining)(\x{0D3E})/$1$3$2/gos;			# MALAYALAM VOWEL SIGN EE
-  $_[0] =~ s/(\x{0D46})($is_Combining)([\x{0D3E}\x{0D57} ])/$1$3$2/gos;		# MALAYALAM VOWEL SIGN E
-  $_[0] =~ s/(\x{1025})($is_Combining)(\x{102E})/$1$3$2/gos;			# MYANMAR LETTER U
-  $_[0] =~ s/(\x{0DD9})($is_Combining)([\x{0DCF}\x{0DDF}])/$1$3$2/gos;		# SINHALA VOWEL SIGN KOMBUVA
-  $_[0] =~ s/([\x{1100}-\x{1112}])($is_Combining)([\x{1161}-\x{1175} ])/$1$3$2/gos; # HANGUL CHOSEONG KIYEOK..HIEUH
-  $_[0] =~ s/($is_HangulLV|[\x{1100}-\x{1112}][\x{1161}-\x{1175}])($is_Combining)([\x{11A8}-\x{11C2}])/$1$3$2/gos; # HANGUL SyllableType=LV
- 
-  goto &_NFKC_3_2;
+sub _check_pr29 {
+  die "String contains Unicode Corrigendum #5 problem sequences" if shift =~ m/
+    \x{09C7}$is_Combining+[\x{09BE}\x{09D7}]		| # BENGALI VOWEL SIGN E
+    \x{0B47}$is_Combining+[\x{0B3E}\x{0B56}\x{0B57}]	| # ORIYA VOWEL SIGN E
+    \x{0BC6}$is_Combining+[\x{0BBE}\x{0BD7}]		| # TAMIL VOWEL SIGN E
+    \x{0BC7}$is_Combining+\x{0BBE}			| # TAMIL VOWEL SIGN EE
+    \x{0B92}$is_Combining+\x{0BD7}			| # TAMIL LETTER O
+    \x{0CC6}$is_Combining+[\x{0CC2}\x{0CD5}\x{0CD6}]	| # KANNADA VOWEL SIGN E
+    [\x{0CBF}\x{0CCA}]$is_Combining\x{0CD5}		| # KANNADA VOWEL SIGN I or KANNADA VOWEL SIGN O
+    \x{0D47}$is_Combining+\x{0D3E}			| # MALAYALAM VOWEL SIGN EE
+    \x{0D46}$is_Combining+[\x{0D3E}\x{0D57}]		| # MALAYALAM VOWEL SIGN E
+    \x{1025}$is_Combining+\x{102E}			| # MYANMAR LETTER U
+    \x{0DD9}$is_Combining+[\x{0DCF}\x{0DDF}]		| # SINHALA VOWEL SIGN KOMBUVA
+    [\x{1100}-\x{1112}]$is_Combining[\x{1161}-\x{1175} ] | # HANGUL CHOSEONG KIYEOK..HIEUH
+    ($is_HangulLV|[\x{1100}-\x{1112}][\x{1161}-\x{1175}])($is_Combining)([\x{11A8}-\x{11C2}]) # HANGUL SyllableType=LV
+  /osx;
 }
-
-sub _NFKC_3_2 {
-  my $string = shift;
-
-  ## pre-map characters corrected in Corrigendum #4
-  ##
-  $string =~ tr/\x{2F868}\x{2F874}\x{2F91F}\x{2F95F}\x{2F9BF}/\x{2136A}\x{5F33}\x{43AB}\x{7AAE}\x{4D57}/;
-
-  ## only normalize runs of assigned characters
-  ##
-  my @s = split m/($is_Unassigned+)/o, $string;
-
-  for( my $i = 0; $i <= $#s ; $i+=2 ) { # skips delimiters == is_Unassigned
-    no warnings 'utf8';
-    $s[$i] = Unicode::Normalize::NFKC($s[$i]);
-  }
-  return join '', @s;
-}
-
-my $is_RandAL = _compile_set(@Unicode::Stringprep::BiDi::D1);
-my $is_L = _compile_set(@Unicode::Stringprep::BiDi::D2);
-
-sub _check_bidi {
-  my $string = shift;
-
-  if($string =~ m/$is_RandAL/os) {
-    if($string =~ m/$is_L/os) {
-      die "string contains both RandALCat and LCat characters"
-    } elsif($string !~ m/^(?:$is_RandAL)/os) {
-      die "string contains RandALCat character but does not start with one"
-    } elsif($string !~ m/(?:$is_RandAL)$/os) {
-      die "string contains RandALCat character but does not end with one"
-    }
-  }
-}
-
 
 1;
 __END__
@@ -355,41 +358,70 @@ This module exports nothing.
 
 Creates a C<bless>ed function reference that implements a stringprep profile.
 
-C<$unicode_version> is the Unicode version specified by the
-stringprep profile. Currently, this parameter must be C<3.2>.
+This function takes the following parameters:
 
-C<$mapping_tables> provides the mapping tables used for
-stringprep.  It may be a reference to a hash or an array. A hash
-must map Unicode codepoints (as integers, S<e. g.> C<0x0020> for
-U+0020) to replacement strings (as perl strings).  An array may
-contain pairs of Unicode codepoints and replacement strings as
-well as references to nested hashes and arrays.
+=over
+
+=item $unicode_version
+
+The Unicode version specified by the stringprep profile.
+
+Currently, this parameter must be C<3.2> (numeric).
+
+=item $mapping_tables
+
+The mapping tables used for stringprep.  
+
+The parameter may be a reference to a hash or an array, or C<undef>. A hash
+must map Unicode codepoints (as integers, S<e. g.> C<0x0020> for U+0020) to
+replacement strings (as perl strings).  An array may contain pairs of Unicode
+codepoints and replacement strings as well as references to nested hashes and
+arrays.
+
 L<Unicode::Stringprep::Mapping> provides the tables from S<RFC 3454>,
-S<Appendix B.> For further information on the mapping step, see
-S<RFC 3454>, S<section 3.>
+S<Appendix B>.
 
-C<$unicode_normalization> is the Unicode normalization to be used.
-Currently, C<''> (no normalization) and C<'KC'> (compatibility
-composed) are specified for I<stringprep>. For further information
-on the normalization step, see S<RFC 3454>, S<section 4.>
+For further information on the mapping step, see S<RFC 3454>, S<section 3>.
 
-C<$prohibited_tables> provides the list of prohibited output
-characters for stringprep.  It may be a reference to an array. The
-array contains pairs of codepoints, which define the start and end
-of a Unicode character range (as integers). The end character may
-be C<undef>, specifying a single-character range. The array may
-also contain references to nested arrays.
-L<Unicode::Stringprep::Prohibited> provides the tables from
-S<RFC 3454>, Appendix C. For further information on the prohibition
-checking step, see S<RFC 3454>, S<section 5.>
+=item $unicode_normalization 
 
-C<$bidi_check> must be set to true if additional checks for
-bidirectional characters are required. For further information on
-the bidi checking step, see S<RFC 3454>, S<section 6.>
+The Unicode normalization to be used.
+
+Currently, C<undef>/C<''> (no normalization) and C<'KC'> (compatibility
+composed) are specified for I<stringprep>.
+
+For further information on the normalization step, see S<RFC 3454>,
+S<section 4>.
+
+=item $prohibited_tables 
+
+The list of prohibited output characters for stringprep. 
+
+The parameter may be a reference to an array, or C<undef>. The
+array contains B<pairs> of codepoints, which define the B<start>
+and B<end> of a Unicode character range (as integers). The end
+character may be C<undef>, specifying a single-character range.
+The array may also contain references to nested arrays.
+
+L<Unicode::Stringprep::Prohibited> provides the tables from S<RFC 3454>,
+S<Appendix C>.
+
+For further information on the prohibition checking step, see 
+S<RFC 3454>, S<section 5>.
+
+=item $bidi_check
+
+Whether to enable $bidi_checks. A boolean value.
+
+For further information on the bidi checking step, see S<RFC 3454>,
+S<section 6>.
+
+=back
 
 The function returned can be called with a single parameter, the
 string to be prepared, and returns the prepared string. It will
-die if the input string is invalid (so use C<eval> if necessary).
+die if the input string cannot be successfully prepared (so use
+C<eval> if necessary).
 
 For performance reasons, it is strongly recommended to call the
 C<new> function as few times as possible, S<i. e.> once per
@@ -466,49 +498,24 @@ C<Unicode::Stringprep>.
 
 =head1 CAVEATS
 
-=head2 perl Version
+In Unicode 3.2 to 4.0.1, the specification of UAX #15: Unicode Normalization
+Forms for forms NFC and NFKC is not logically self-consistent.  This has been
+fixed in Corrigendum #5 (L<http://unicode.org/versions/corrigendum5.html>).
 
-You should use perl 5.8.3 or higher.
+Unfortunately, this yields two ways to implement NFC and NFKC in Unicode 3.2,
+on which the Stringprep standard is based: one based on a literal
+interpretation of the original specification and one based on the corrected
+specification. The output of these implementations differs for a small class of
+strings, all of which can't appear in meaningful text. See UAX #15, section 19
+L<http://unicode.org/reports/tr15/#Stability_Prior_to_Unicode41> for details.
 
-While this module does work with earlier perl versions, there are
-some limitations:
+This module will check for these strings and prohibit them in output as it is
+not possible to interoperate under these circumstandes. That is, the prepration
+function will die as with any other prohibited input.
 
-Perl 5.6 does not promote strings to UTF-8 automatically.
-B<You> have to make sure that you only pass valid UTF-8 strings to
-this module.
-
-Perl 5.6 to 5.7 come with Unicode databases earlier than 
-version 3.2. Strings that contain characters for which the
-normalisation has been changed are not prepared correctly.
-
-Perl 5.6 to 5.8.2 can't handle surrogate characters
-(U+D800..U+DFFF) in strings.
-If a profile tries to map these characters, they won't be mapped
-(currently no stringprep profile does this).
-If a profile prohibits these characters, this module may fail to
-detect them (currently, all profiles do that, so B<you> have to
-make sure that these characters are not present).
-
-If any of these problems is detected, this module will issue a
-warning unless C<$Unicode::Stringprep::WARNINGS> is set to false.
-
-=head2 Unicode Corrigendum #5
-
-Unicode 3.2, on which the Stringprep specification is based,
-contained a problem in the language of the specification for
-Normalization Forms NFC and NFKC.
-
-This has been fixed in Unicode 4.1 (Corrigendum #5,
-L<http://unicode.org/versions/corrigendum5.html>).
-
-This module re-produces the old, broken normalization method
-because this is, strictly speaking, required by the Stringprep
-specification.
-
-However, please note that other Stringprep implementations may
-simply ignore the issue or 
-
-
+This may be unexpected if neither prohibited characters nor the bidi check is
+specified. However, as of 2009, all registered Stringprep profiles do prohibit
+characters, so the preparation function can already die.
 
 =head1 AUTHOR
 

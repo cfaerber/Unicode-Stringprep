@@ -25,12 +25,16 @@ foreach my $d (@data) {
   $d->[1] ||= $d->[0];
 
   foreach my $c (0..1) {
+    if($d->[$c] =~ m/undef/) {
+      $d->[$c] = undef; 
+      next;
+    }
     $d->[$c] = join '',
-      map { eval '"\\x{'.$_.'}"' }
+      map { chr hex $_ }
 	grep { length($_) > 0 }
           split /\s+/, $d->[$c];
   }
-  is( $func->($d->[0]), $d->[1], $d->[2] );
+  is( eval{ $func->($d->[0]) }, $d->[1], $d->[2] );
 };
 exit(0);
 
@@ -53,6 +57,6 @@ F951; 964B; Erroneous mapping (Corrigendum 3, corrected in Unicode 3.2)
 213B;; FACSIMILE SIGN (added in 4.0)
 1EA5 35D 329;; No reordering for U+035D (added in 4.0)
 
-0B47 0300 0B3E;; PR 29 test case 1
-1100 0300 1161;; PR 29 test case 2
-1100 0300 1161 0323; ; PR 29 test case 2, expanded
+0B47 0300 0B3E; undef; PR 29 test case 1
+1100 0300 1161; undef; PR 29 test case 2
+1100 0300 1161 0323; undef; PR 29 test case 2, expanded
