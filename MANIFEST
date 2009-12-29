@@ -28,4 +28,3 @@ eg/Examples.pod
 eg/Nameprep.pm
 eg/SASLprep.pm
 META.yml
-SIGNATURE    Added here by Module::Build

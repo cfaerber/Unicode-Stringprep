@@ -8,6 +8,8 @@ use Module::Build;
 my $b = Module::Build->new(
 	'module_name'	=> 'Unicode::Stringprep',
 	'license'	=> 'perl',
+	'dist_author'	=> 'Claus Färber <CFAERBER@cpan.org>',
+	'dist_abstract' => 'Preparation of Internationalized Strings (RFC 3454)',
 
 	'sign'		=> 1,
 	'create_license' => 1,
