@@ -3,60 +3,22 @@ use utf8;
 
 no warnings 'utf8';
 
-use Test::More tests => 20;
+use Test::More tests => 14;
 use Test::NoWarnings;
 
-use Unicode::Stringprep;
+use Unicode::Normalize;
 
-#     [
-#       "Non-ASCII multibyte space character U+2000",
-#       "\x{2000}", "\x20"
-#     ],
-#     [
-#       "Larger test (shrinking)",
-#       "X\x{00AD}\x{00DF}\x{0130}\x{2121}\x6a\x{030C}\x{00A0}".
-#       "\x{00AA}\x{03B0}\x{2000}", "xssi\x{0307}tel\x{01F0} a\x{03B0} ",
-#       "Nameprep"
-#     ],
+is( Unicode::Normalize::NFKC("\x{1FFF}"), "\x{1FFF}", 	'U+1FFF' );
+is( Unicode::Normalize::NFKC("\x{2000}"), " ", 		'U+2000 EN QUAD' );
+is( Unicode::Normalize::NFKC("\x{2001}"), " ", 		'U+2001 EM SPACE' );
+is( Unicode::Normalize::NFKC("\x{2002}"), " ", 		'U+2002 EN SPACE' );
+is( Unicode::Normalize::NFKC("\x{2003}"), " ", 		'U+2003 EM SPACE' );
+is( Unicode::Normalize::NFKC("\x{2004}"), " ",		'U+2004 THREE-PER-EM SPACE' );
+is( Unicode::Normalize::NFKC("\x{2005}"), " ",	 	'U+2005 FOUR-PER-EM SPACE' );
+is( Unicode::Normalize::NFKC("\x{2006}"), " ", 		'U+2006 SIX-PER-EM SPACE' );
+is( Unicode::Normalize::NFKC("\x{2007}"), " ", 		'U+2007 FIGURE SPACE' );
+is( Unicode::Normalize::NFKC("\x{2008}"), " ", 		'U+2008 PUNCTUATION SPACE' );
+is( Unicode::Normalize::NFKC("\x{2009}"), " ", 		'U+2009 THIN SPACE' );
+is( Unicode::Normalize::NFKC("\x{200A}"), " ", 		'U+200A HAIR SPACE' );
+is( Unicode::Normalize::NFKC("\x{200B}"), "\x{200B}",	'U+200B ZERO WIDTH SPACE' );
 
-
-sub mk {
-  my @d = map { $_ || undef; } @_;
-
-  return Unicode::Stringprep->new(
-    3.2,
-    $d[0] && [ \@Unicode::Stringprep::Mapping::B1, \@Unicode::Stringprep::Mapping::B2 ],
-    $d[1] && 'KC',
-    $d[2] && [ \@Unicode::Stringprep::Prohibited::C12, \@Unicode::Stringprep::Prohibited::C22, \@Unicode::Stringprep::Prohibited::C3, \@Unicode::Stringprep::Prohibited::C4, \@Unicode::Stringprep::Prohibited::C5, \@Unicode::Stringprep::Prohibited::C6, \@Unicode::Stringprep::Prohibited::C7, \@Unicode::Stringprep::Prohibited::C8, \@Unicode::Stringprep::Prohibited::C9 ],
-    $d[3] && 1,
-  );
-}
-
-is( mk(0,0,0,0)->("\x{2000}"), "\x{2000}",	'U+2000 (pass-through)' );
-
-is( mk(1,0,0,0)->("\x{2000}"), "\x{2000}",	'U+2000 (mapping)' );
-is( mk(0,1,0,0)->("\x{2000}"), " ",		'U+2000 (normalization)' );
-is( eval { mk(0,0,1,0)->("\x{2000}") }, undef,	'U+2000 (prohibited)' );
-is( mk(0,0,0,1)->("\x{2000}"), "\x{2000}",	'U+2000 (bidi)' );
-
-is( mk(1,1,0,0)->("\x{2000}"), " ",		'U+2000 (mapping+normalization)' );
-is( eval { mk(1,0,1,0)->("\x{2000}") }, undef,	'U+2000 (mapping+prohibited)' );
-is( mk(1,0,0,1)->("\x{2000}"), "\x{2000}",	'U+2000 (mapping+bidi)' );
-
-is( mk(1,1,1,0)->("\x{2000}"), " ",		'U+2000 (mapping+normalization+prohibited)' );
-is( mk(1,1,0,1)->("\x{2000}"), " ",		'U+2000 (mapping+normalization+bidi)' );
-is( eval { mk(1,0,1,1)->("\x{2000}") }, undef,	'U+2000 (mapping+prohibited+bidi)' );
-
-is( mk(0,1,1,0)->("\x{2000}"), ' ',		'U+2000 (normalization+prohibited)' );
-is( mk(0,1,0,1)->("\x{2000}"), " ",		'U+2000 (normalization+bidi)' );
-is( eval { mk(0,0,1,1)->("\x{2000}") }, undef,	'U+2000 (prohibited+bidi)' );
-
-is( mk(0,1,1,1)->("\x{2000}"), ' ',		'U+2000 (normalization+prohibited+bidi)' );
-
-is( mk(1,1,1,1)->("\x{2000}"), " ",		'U+2000 (complete)' );
-
-is( Unicode::Normalize::NFKC("\x{2000}"), " ", 	'U+2000 (Unicode::Normalize::NFKC)' );
-
-no bytes; # make bytes::length available
-is( bytes::length("\x{2000}"), 3,	'bytes::length of U+2000 char literal');
-is( bytes::length(chr(hex(2000))), 3,	'bytes::length of U+2000 chr() output');
