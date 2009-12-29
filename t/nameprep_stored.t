@@ -239,9 +239,8 @@ plan tests => ($#strprep+1) + 1;
     @Unicode::Stringprep::Prohibited::C7,
     @Unicode::Stringprep::Prohibited::C8,
     @Unicode::Stringprep::Prohibited::C9,
-    \@Unicode::Stringprep::Unassigned::A1,
   ],
-  1,
+  1, 1,
 );
 
 foreach my $test (@strprep) 

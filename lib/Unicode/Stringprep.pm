@@ -6,7 +6,7 @@ use strict;
 use utf8;
 use warnings;
 
-our $VERSION = "1.09_70091230"; # +_5000 b/c _2009 is occupied by with-use-bytes branch
+our $VERSION = "1.09_70091231"; # +_5000 b/c _2009 is occupied by with-use-bytes branch
 $VERSION = eval $VERSION;
 
 require Exporter;
@@ -36,6 +36,7 @@ sub _compile {
   my $unicode_normalization = uc shift;
   my $prohibited_tables = shift;
   my $bidi_check = shift;
+  my $unassigned_check = shift;
 
   croak 'Unsupported Unicode version '.$unicode_version.'.' 
     if $unicode_version != 3.2;
@@ -44,6 +45,7 @@ sub _compile {
   my $normalization_sub = _compile_normalization($unicode_normalization);
   my $prohibited_sub = _compile_prohibited($prohibited_tables);
   my $bidi_sub = $bidi_check ? '_check_bidi($string)' : undef;
+  my $unassigned_sub = $unassigned_check ? '_check_unassigned($string)' : undef;
   my $pr29_sub = (defined $normalization_sub) ? '_check_pr29($string)' : undef;
 
   my $code = "sub { no warnings 'utf8';".
@@ -57,6 +59,7 @@ sub _compile {
       $normalization_sub,
       $prohibited_sub,
       $bidi_sub,
+      $unassigned_sub,
       $pr29_sub ).
       'return $string;'.
     '}';
@@ -174,6 +177,12 @@ sub _NFKC_3_2 {
     $s[$i] = Unicode::Normalize::NFKC($s[$i]);
   }
   return join '', @s;
+}
+
+sub _check_unassigned {
+  if( shift =~ m/($is_Unassigned)/os ) {
+    die sprintf("unassigned character U+%04X",ord($1));
+  }
 }
 
 sub _compile_prohibited {
@@ -316,7 +325,7 @@ Unicode::Stringprep - Preparation of Internationalized Strings (S<RFC 3454>)
       @Unicode::Stringprep::Prohibited::C5, @Unicode::Stringprep::Prohibited::C6,
       @Unicode::Stringprep::Prohibited::C7, @Unicode::Stringprep::Prohibited::C8,
       @Unicode::Stringprep::Prohibited::C9 ],
-    1 );
+    1, 0 );
   $output = $prepper->($input)
 
 =head1 DESCRIPTION
@@ -342,7 +351,7 @@ This module exports nothing.
 
 =over 4
 
-=item B<new($unicode_version, $mapping_tables, $unicode_normalization, $prohibited_tables, $bidi_check)>
+=item B<new($unicode_version, $mapping_tables, $unicode_normalization, $prohibited_tables, $bidi_check, $unassigned_check)>
 
 Creates a C<bless>ed function reference that implements a stringprep profile.
 
@@ -381,6 +390,11 @@ composed) are specified for I<stringprep>.
 For further information on the normalization step, see S<RFC 3454>,
 S<section 4>.
 
+Normalization form KC will also enable checks for some problem sequences for
+which the normalization can't be implemented in an interoperable way.
+
+For more information, see L</CAVEATS> below.
+
 =item $prohibited_tables 
 
 The list of prohibited output characters for stringprep. 
@@ -399,23 +413,34 @@ S<RFC 3454>, S<section 5>.
 
 =item $bidi_check
 
-Whether to enable $bidi_checks. A boolean value.
+Whether to employ checks for confusing bidirectional text. A boolean value.
 
 For further information on the bidi checking step, see S<RFC 3454>,
 S<section 6>.
 
+=item $unassigned_check
+
+Whether to check for and prohibit unassigned characters. A boolean value.
+
+The check must be used when creating I<stored> strings. It should not be used
+for I<query> strings, increasing the chance that newly assigned characters work
+as expected.
+
+For further information on I<stored> and I<query> strings, see S<RFC 3454>, 
+S<section 7>.
+
 =back
 
-The function returned can be called with a single parameter, the
-string to be prepared, and returns the prepared string. It will
-die if the input string cannot be successfully prepared (so use
+The function returned can be called with a single parameter, the string to be
+prepared, and returns the prepared string. It will die if the input string
+cannot be successfully prepared because it would contain invalid output (so use
 C<eval> if necessary).
 
 For performance reasons, it is strongly recommended to call the
-C<new> function as few times as possible, S<i. e.> once per
+C<new> function as few times as possible, S<i. e.> exactly once per
 I<stringprep> profile. It might also be better not to use this
 module directly but to use (or write) a module implementing a
-profile, such as L<Net::IDN::Nameprep>.
+profile, such as L<Authen::SASL::SASLprep>.
 
 =back
 
@@ -497,13 +522,14 @@ specification. The output of these implementations differs for a small class of
 strings, all of which can't appear in meaningful text. See UAX #15, section 19
 L<http://unicode.org/reports/tr15/#Stability_Prior_to_Unicode41> for details.
 
-This module will check for these strings and prohibit them in output as it is
-not possible to interoperate under these circumstandes. That is, the prepration
-function will die as with any other prohibited input.
+This module will check for these strings and, if normalization is done,
+prohibit them in output as it is not possible to interoperate under these
+circumstandes. 
 
-This may be unexpected if neither prohibited characters nor the bidi check is
-specified. However, as of 2009, all registered Stringprep profiles do prohibit
-characters, so the preparation function can already die.
+Please note that due to this, the I<normalization> step may cause the
+preparation to fail. That is, the preparation function may die even if there
+are no prohibited characters and no checks for bidi sequences and unassigned
+characters, which may be surprising.
 
 =head1 AUTHOR
 

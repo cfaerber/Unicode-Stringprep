@@ -1,5 +1,11 @@
 Revision history for Perl extension Unicode::Stringprep
 
+1.09_70091231 (2009-12-28)
+	- add support for stored strings
+
+1.09_70091230 (2009-12-28)
+	- add 3.2-compatible normalization
+
 1.09_70091228 Dec 26 00:00:00 2009
 	- add tests for automatic promotion to utf8 (bytes input)
 	- warn with old perls < 5.8.3
