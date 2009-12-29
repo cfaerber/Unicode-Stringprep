@@ -1,13 +1,15 @@
 package Unicode::Stringprep::_Common;
 
+require 5.8.3;
+
 use strict;
 use utf8;
 use warnings;
-require 5.006_000;
 
 use Exporter;
 
-our $VERSION = '1.01';
+our $VERSION = "1.10";
+$VERSION = eval { $VERSION };
 
 our @ISA = ('Exporter');
 our @EXPORT = ('_mk_set', '_mk_map');
@@ -23,10 +25,6 @@ sub _mk_set {
   return @data;
 };
 
-my $_mk_char = $] <= 5.008002
-  ? sub { eval '"\\x{'.(shift).'}"' }
-  : sub { chr(hex(shift)) };
-
 sub _mk_map {
   my @data = ();
   foreach my $line (split /\n/, shift) {
@@ -38,9 +36,9 @@ sub _mk_map {
         join('',map { 
 	  $_ eq '' 
 	    ? '' 
-	    : $_mk_char->($_)
+	    : chr(hex($_))
 	}
-	split(/ +/, $to));
+	split(' ', $to));
   }
   return @data;
 };

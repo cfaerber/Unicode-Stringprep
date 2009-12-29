@@ -18,13 +18,13 @@ t/30_mappings.t
 t/31_prohibited_characters.t
 t/31_prohibited_characters_extra.t
 t/32_nfkc_3_2.t
-t/99_perl-5.11.2-3.t
+t/99_perl-5.11.3.t
 t/nameprep.t
 t/nameprep_stored.t
 t/nameprep_bytes.t
 t/saslprep.t
 t/saslprep_bytes.t
-eg/Examples.pod
+eg/Readme-Examples.pod
 eg/Nameprep.pm
 eg/SASLprep.pm
 META.yml

@@ -3,9 +3,8 @@ package Unicode::Stringprep::Mapping;
 use strict;
 use utf8;
 use warnings;
-require 5.006_000;
 
-our $VERSION = '1.01';
+our $VERSION = "1.10";
 
 use Unicode::Stringprep::_Common;
 

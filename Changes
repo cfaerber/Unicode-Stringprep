@@ -1,5 +1,8 @@
 Revision history for Perl extension Unicode::Stringprep
 
+1.10 (2010-01-01)
+	- release as 1.10
+
 1.09_70091231 (2009-12-28)
 	- add support for stored strings
 

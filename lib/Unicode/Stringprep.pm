@@ -6,7 +6,7 @@ use strict;
 use utf8;
 use warnings;
 
-our $VERSION = "1.09_70091231"; # +_5000 b/c _2009 is occupied by with-use-bytes branch
+our $VERSION = "1.10";
 $VERSION = eval $VERSION;
 
 require Exporter;
