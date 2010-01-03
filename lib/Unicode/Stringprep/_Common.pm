@@ -1,6 +1,6 @@
 package Unicode::Stringprep::_Common;
 
-require 5.8.3;
+require 5.008_003;
 
 use strict;
 use utf8;

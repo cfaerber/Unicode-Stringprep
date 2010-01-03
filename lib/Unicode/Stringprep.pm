@@ -1,12 +1,12 @@
 package Unicode::Stringprep;
 
-require 5.8.3;
+require 5.008_003;
 
 use strict;
 use utf8;
 use warnings;
 
-our $VERSION = "1.10";
+our $VERSION = "1.101";
 $VERSION = eval $VERSION;
 
 require Exporter;
