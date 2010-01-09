@@ -6,7 +6,7 @@ use strict;
 use utf8;
 use warnings;
 
-our $VERSION = "1.101";
+our $VERSION = "1.102";
 $VERSION = eval $VERSION;
 
 require Exporter;
@@ -166,6 +166,7 @@ sub _NFKC_3_2 {
 
   ## pre-map characters corrected in Corrigendum #4
   ##
+  no warnings 'utf8';
   $string =~ tr/\x{2F868}\x{2F874}\x{2F91F}\x{2F95F}\x{2F9BF}/\x{2136A}\x{5F33}\x{43AB}\x{7AAE}\x{4D57}/;
 
   ## only normalize runs of assigned characters

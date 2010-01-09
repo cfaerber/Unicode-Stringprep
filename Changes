@@ -1,5 +1,8 @@
 Revision history for Perl extension Unicode::Stringprep
 
+1.102 (2010-01-09)
+	- fix utf8 warning in _NFKC_3_2
+
 1.101 (2010-01-03)
 	- fix v-string warning on perl >= 5.10
 
