@@ -1,6 +1,5 @@
 use strict;
 use utf8;
-use diagnostics;
 
 no warnings 'utf8';
 

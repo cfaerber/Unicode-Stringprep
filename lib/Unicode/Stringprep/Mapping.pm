@@ -2265,7 +2265,7 @@ Unicode::Stringprep::Mapping - Tables from S<RFC 3454>, S<Appendix B>
 
   @Unicode::Stringprep::Mapping::B1	# Appendix B.1
   @Unicode::Stringprep::Mapping::B2	# Appendix B.2
-  @Unicode::Stringprep::Mapping::B2	# Appendix B.3
+  @Unicode::Stringprep::Mapping::B3	# Appendix B.3
 
 =head1 DESCRIPTION
 
@@ -2281,7 +2281,7 @@ Claus FE<auml>rber E<lt>CFAERBER@cpan.orgE<gt>
 
 =head1 LICENSE
 
-Copyright 2007-2009 Claus FE<auml>rber.
+Copyright 2007-2010 Claus FE<auml>rber.
 
 This library is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
