@@ -8,4 +8,7 @@ Build
 _build
 LICENSE
 META.yml
+META.json
+MYMETA.yml
+MYMETA.json
 SIGNATURE
