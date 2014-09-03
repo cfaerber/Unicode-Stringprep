@@ -1,5 +1,9 @@
 Revision history for Perl extension Unicode::Stringprep
 
+1.105 (2014-09-03)
+	- FIXES: #98106: [PATCH] Silence "Redundant argument in sprintf"
+	  warnings (reported by fraserbn@*****.com)
+
 1.104 (2011-12-08)
 	- FIXES: #72615 faulty data in Build.PL causes a lack of
 	  meta files, which breaks carton.

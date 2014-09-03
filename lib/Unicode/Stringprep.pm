@@ -6,7 +6,7 @@ use strict;
 use utf8;
 use warnings;
 
-our $VERSION = "1.104";
+our $VERSION = "1.105";
 $VERSION = eval $VERSION;
 
 require Exporter;
@@ -139,10 +139,9 @@ sub _compile_set {
   return undef if !@set;
 
   return '['.join('', map {
-    sprintf( $_->[0] >= $_->[1] 
-      ? "\\x{%X}"
-      : "\\x{%X}-\\x{%X}",
-      @{$_})
+    $_->[0] >= $_->[1]
+        ? sprintf("\\x{%X}", $_->[0])
+        : sprintf("\\x{%X}-\\x{%X}", @{$_}[0,1])
     } @set ).']';
 }
 
